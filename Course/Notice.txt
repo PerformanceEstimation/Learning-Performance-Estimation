@@ -1,0 +1,10 @@
+
+- blog post
+
+- faire coder NAG en //
+
+- exos:
+	- SGD?
+	- prox/proj gradient?
+
+- 
