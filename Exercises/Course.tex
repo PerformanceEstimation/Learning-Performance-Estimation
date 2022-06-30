@@ -1,0 +1,399 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{hyperref}
+\usepackage{bibentry}
+\nobibliography*
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{fixltx2e}
+\usepackage[framed,numbered,autolinebreaks,useliterate]{mcode}
+
+%\usepackage{url,textcomp}
+
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\usepackage{enumerate}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{comment}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{pdfsync}
+%\usepackage[svgnames]{xcolor}
+\usepackage[tikz]{bclogo}
+\usepackage{pifont}
+\hypersetup{
+	colorlinks   = true, %Colours links instead of ugly boxes
+	urlcolor     = blue, %Colour for external hyperlinks
+	linkcolor    = blue, %Colour of internal links
+	citecolor   = blue %Colour of citations
+}
+\usepackage{cleveref}
+
+\renewcommand{\headrulewidth}{1pt}
+\newcommand{\norm}[1]{{\left\lVert#1\right\rVert}}
+\newcommand{\normsq}[1]{{\left\lVert#1\right\rVert}^2}
+\newcommand{\Tr}[1]{{\trace\left(#1\right)}}
+\newcommand{\Rd}{\mathbb{R}^d}
+\newcommand{\inner}[2]{{\langle #1, #2\rangle}}
+\DeclareMathOperator{\dom}{dom}
+\DeclareMathOperator{\val}{val}
+\DeclareMathOperator{\epi}{epi}
+\DeclareMathOperator{\trace}{Tr}
+\DeclareMathOperator{\tr}{\trace}
+\DeclareMathOperator{\linspan}{span}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\FmuL}{\mathcal{F}_{\mu,L}}
+
+\newcommand{\bv}{\mathbf{v}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bg}{\mathbf{g}}
+\newcommand{\bfu}{\mathbf{f}}
+
+\newcommand{\real}{\mathbb{R}}
+\fancyhead[L]{}
+\fancyhead[R]{}
+
+\fancyfoot[C]{\textbf{page \thepage}}
+
+\newcommand{\caution}[1]{{\color{red}{\sc Caution:} #1}}
+\newcommand{\pesto}{{PESTO }}
+\newcommand{\pepit}{{PEPit }}
+
+\newtheorem{exercise}{Exercise}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+
+\begin{document}
+	\author{Adrien Taylor\footnote{INRIA, SIERRA project-team, and D.I. Ecole normale sup\'erieure, Paris, France. Email: adrien.taylor@inria.fr}, Baptiste Goujaud\footnote{CMAP, École Polytechnique, Institut Polytechnique de Paris, France. Email: baptiste.goujaud@gmail.com}}
+	
+	\title{Worst-case analyses for first-order optimization methods}
+	\date{Current version: \today}
+	\maketitle
+	
+	\renewcommand*\contentsname{}
+	\setcounter{tocdepth}{2} \tableofcontents
+	
+
+
+	\section*{Foreword \& Acknowledgements}
+	Those notes were written for accompanying the \href{https://trade-opt-itn.eu/workshop.html}{TraDE-OPT workshop on algorithmic and continuous optimization}. If you have any comment, remark, or if you found a typo/mistake, please don't hesitate to feedback the authors!
+	
+	\paragraph*{Funding.} A. Taylor acknowledges support from the European Research Council (grant SEQUOIA 724063). This work was partly funded by the French government under management of Agence Nationale de la Recherche as part of the ``Investissements d’avenir'' program, reference ANR-19-P3IA-0001 (PRAIRIE 3IA Institute). The work of B. Goujaud is partially supported by ANR-19-CHIA-0002-01/chaire SCAI, and Hi!Paris. 
+	
+	\clearpage
+	%==================================
+	%								%||
+	\section{Introduction}			%||
+	%============================	%||
+	%==================================
+	
+	This document provides a series of exercises for getting familiar with ``performance estimation problems'' and the use of semidefinite programming for analyzing the worst-case behaviors of first-order optimization methods. An informal introduction can be found in this \href{https://francisbach.com/computer-aided-analyses/}{blog post}.
+	
+	Notation and necessary background material is provided in \Cref{sec:background}.
+	
+	Note that worst-case analysis is a confortable tool... but it might not always be representative of reality (but when it is... it is nice because confortable!)
+	
+
+	
+	%==================================
+	%								%||
+	\section{Exercises}			%||
+	%============================	%||
+	%==================================
+	
+	\begin{exercise}[Linear convergence of the gradient method] For this exercise, consider the problem of ``black-box'' minimization of a smooth strongly convex function:
+	\begin{equation}\label{eq:ex1_prob}
+	f_\star \triangleq \min_{x\in\mathbb{R}^d} f(x),
+	\end{equation}
+	where $f$ is $L$-smooth and $\mu$-strongly convex (see \Cref{def:smoothstronglyconvex}), and where $x_\star\triangleq \argmin_{x} f(x)$ and $f_\star\triangleq f(x_\star)$ its optimal value. For minimizing~\eqref{eq:ex1_prob} we use gradient descent with a pre-determined sequence of step sizes $\{\gamma_k\}_k$; that is, we iterate $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$.
+	The goal of this exercise is to compute $\tau(\mu,L,\gamma_k)$, a.k.a.\! a convergence rate, the smallest value such that the inequality
+	\[ \|x_{k+1}-x_\star\|^2 \leqslant \tau(\mu,L,\gamma_k) \|x_k-x_\star\|^2\]
+	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\frac{\gamma_k}{L} \nabla f(x_k)$, and $x_\star=\argmin_x f(x)$. 
+	\begin{enumerate}
+	\item Show that 
+	\begin{align*}
+		\tau(\mu,L,\gamma_k)= \sup_{\substack{d,f\\x_k,x_{k+1},x_\star}} \ &\frac{\|x_{k+1}-x_\star\|^2}{\|x_k-x_\star\|^2}\\
+		\text{s.t. } & f\in\mathcal{F}_{\mu,L} \\
+		&x_{k+1}=x_k-\gamma_k  \nabla f(x_k)\\
+		&\nabla f(x_\star)=0,
+		\end{align*} where $f$, $x_k$, $x_{k+1}$, $x_\star$, and $d$ are the variables and $\mu$, $L$, $\gamma$ are parameters.
+		
+		Note that we will (sometimes abusively) use $\max$ instead of $\sup$ in the sequel as the optimum is usually attained for such problems (for this exercise, this is actually easy to show as the optimization problem is over a compact set).
+	\item Show that
+	\begin{equation*}
+		\begin{aligned}
+		\tau(\mu,L,\gamma_k)=\max_{\substack{x_k,x_{k+1},x_\star\\g_k,g_\star\\f_k,f_\star}} \quad & \frac{{\|x_{k+1}-x_\star\|}^2}{\|x_k-x_\star\|^2}\\
+		\text{s.t. } & \exists f\in\mathcal{F}_{\mu,L} \text{ such that }\left\{\begin{array}{ll}
+			f_i=f(x_i)\quad & i=k,\star\\
+			g_i=f'(x_i)\quad & i=k,\star
+			\end{array}\right.\\
+		& x_{k+1}=x_k-\gamma  g_k\\
+		& g_\star=0.\\
+		\end{aligned}
+		\end{equation*}
+	\item Using \Cref{thm:interp_smoothstronglyconvex}, show that
+	\begin{equation*}
+		\begin{aligned}
+		\tau(\mu,L,\gamma_k)=\max_{\substack{x_k,x_{k+1},x_\star\\g_k,g_\star\\f_k,f_\star}} \quad & \frac{{\|x_{k+1}-x_\star\|}^2}{\|x_k-x_\star\|^2}\\
+		\text{s.t. } & f_\star\geqslant f_k+\inner{g_k}{x_\star-x_k}+\tfrac{1}{2L}\normsq{g_\star-g_k}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_\star-x_k-\tfrac{1}{L}(g_\star-g_k)}\\
+			&f_k\geqslant f_\star+\inner{g_\star}{x_k-x_\star}+\tfrac{1}{2L}\normsq{g_k-g_\star}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_k-x_\star-\tfrac{1}{L}(g_k-g_\star)}\\
+		& x_{k+1}=x_k-\gamma  g_k\\
+		& g_\star=0.\\
+		\end{aligned}
+		\end{equation*}
+	\item Show that
+	\begin{equation*}
+		\begin{aligned}
+		\tau(\mu,L,\gamma_k)=\max_{\substack{x_k,x_{k+1},x_\star\\g_k,g_\star\\f_k,f_\star}} \quad &{\|x_{k+1}-x_\star\|}^2\\
+		\text{s.t. } & f_\star\geqslant f_k+\inner{g_k}{x_\star-x_k}+\tfrac{1}{2L}\normsq{g_\star-g_k}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_\star-x_k-\tfrac{1}{L}(g_\star-g_k)}\\
+			&f_k\geqslant f_\star+\inner{g_\star}{x_k-x_\star}+\tfrac{1}{2L}\normsq{g_k-g_\star}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_k-x_\star-\tfrac{1}{L}(g_k-g_\star)}\\
+		& \|x_k-x_\star\|^2 = 1\\
+		& x_{k+1}=x_k-\gamma  g_k\\
+		& g_\star=0.\\
+		\end{aligned}
+		\end{equation*}
+	\item Define $G$ and $F$
+			\begin{align*}
+			G \triangleq \begin{bmatrix}
+			\|x_k-x_\star\|^2 & \langle g_k,x_k-x_\star\rangle\\
+			\langle g_k, x_k-x_\star\rangle & \| g_k\|^2
+			\end{bmatrix},\quad 	F \triangleq 			f_k-f_\star,
+			\end{align*}
+			(note that $G=[x_k-x_\star \quad g_k]^\top [x_k-x_\star \quad g_k]\succcurlyeq 0$. Show that previous problem can be reformulated as a $2\times 2$ SDP  
+			\begin{equation*}
+			\begin{aligned}
+			\tau(\mu,L,\gamma_k)=\max_{G,\, F} \quad & G_{1,1}+\gamma_k ^2 G_{2,2}-2\gamma_k G_{1,2}\\
+			\text{s.t. } \quad & F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{L}{L-\mu}G_{1,2}\leqslant 0\\
+			&-F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{\mu}{L-\mu}G_{1,2}\leqslant 0\\
+			&G_{1,1}= 1\\
+			&G\succcurlyeq 0,
+			\end{aligned}
+			\end{equation*}
+	\item Define $h_k\triangleq \gamma_k L$ and $\kappa=L/\mu$. Show that $\tau(\mu,L,\gamma_k)=\tau(1/\kappa,1,h_k)$ (in other words: we can study the case $L=1$ only and deduce the dependence of $\tau$ on $L$ afterwards).
+	\item Complete the \href{aa}{\pepit code} (alternative in Matlab: \href{aa}{\pesto code}) for computing $\tau(\mu,L,\gamma_k)$ and compute its value for a few numerical values of $\mu$ and $\gamma_k$. 
+	\item Using Lagrangian duality with the following primal-dual pairing ($\tau,\lambda_1,\lambda_2$ are dual variables):
+	\begin{equation*}
+			\begin{aligned}
+			& F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{L}{L-\mu}G_{1,2}\leqslant 0&&:\lambda_1\\
+			&-F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{\mu}{L-\mu}G_{1,2}\leqslant 0&&:\lambda_2\\
+			&G_{1,1}= 1&&:\tau
+			\end{aligned}
+			\end{equation*}
+	
+	 one can show that
+		\begin{equation}\label{eq:ex1_dual}	 
+		\begin{aligned}
+			\tau(\mu,L,\gamma_k)=\min_{\tau,\lambda_1,\lambda_2\geqslant 0} & \,\tau\\
+			\text{s.t. }& S=\begin{bmatrix}
+				\tau-1+\frac{\lambda_1 L\mu}{L-\mu } & \gamma_k-\frac{\lambda_1 (\mu +L)}{2 (L-\mu )} \\
+				\gamma_k-\frac{\lambda_1 (\mu +L)}{2 (L-\mu )} & \frac{\lambda_1}{L-\mu }-\gamma_k^2 \\
+			\end{bmatrix}\succcurlyeq 0\\
+			&0=\lambda_1-\lambda_2.
+		\end{aligned}
+		\end{equation}
+	Note that equility holds due to strong duality (for going further: prove strong duality using a Slater condition). 
+	
+	Show that any feasible point $(\tau,\lambda_1,\lambda_2)$ to~\eqref{eq:ex1_dual} corresponds to an upper bound on $\tau(\mu,L,\gamma_k)$ (i.e., $\tau(\mu,L,\gamma_k)\leqslant \tau$.
+	
+	\item Is there a simple closed form expression for $\tau(\mu,L,\gamma_k)$? (hint: can we solve~\eqref{eq:ex1_dual} in closed form?) Does it match the numerical values obtained using the previous codes for computing $\tau(\mu,L,\gamma_k)$ numerically?
+	\item How can we adapt the (primal) SDP formulation for computing the smallest possible $\tau$ such that the inequality
+	\[ \|\nabla f(x_{k+1}\|^2 \leqslant \tau \|\nabla f(x_k)\|^2\]
+	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\frac{\gamma_k}{L} \nabla f(x_k)$? Modify your previous code for computing such a bound. Can you guess a closed-form expression for it?
+	
+	For going further: prove that feasible points to the (dual) problem
+	\begin{equation*}
+	...
+	\end{equation*}
+	correspond to upper bounds on $\tau$. Are there simple closed-form solution for this problem?
+	\item How can we adapt the (primal) SDP formulation for computing the smallest possible $\tau$ such that the inequality
+	\[ f(x_{k+1})-f(x_\star) \leqslant \tau (f(x_{k})-f(x_\star))\]
+	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\frac{\gamma_k}{L} \nabla f(x_k)$? Modify your previous code for computing such a bound. Can you guess a closed-form expression for it?
+	
+	For going further: prove that feasible points to the (dual) problem
+	\begin{equation*}
+	...
+	\end{equation*}
+	correspond to upper bounds on $\tau$. Are there simple closed-form solution for this problem?
+	\end{enumerate}
+	\end{exercise}
+
+	\begin{exercise}[Sublinear convergence of gradient descent and acceleration]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item numerical trials (code: XXX). Ex: modify the code to compute worst gradient norm, and worst best gradient norm among iterates
+	\end{enumerate}
+	\end{exercise}
+	
+\begin{exercise}[Subgradient method]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item numerical trials (code: XXX). Ex: modify the code to compute worst gradient norm, and worst best gradient norm among iterates
+	\end{enumerate}
+	\end{exercise}
+	
+	
+	\begin{exercise}[Acceleration and Lyapunov analyses]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+	\begin{exercise}[Fixed-point iterations]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item two methods: Halpern and Kras...
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item using duality show that ... (dual SDP)
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+	
+	\begin{exercise}[Stochastic gradient descent]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item using duality show that ... (dual SDP)
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+	
+	\begin{exercise}[Proximal point method]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+	
+	\begin{exercise}[Proximal gradient method]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+	
+	\begin{exercise}[Douglas-Rachford splitting]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+
+
+	\begin{exercise}[Frank-Wolfe]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}	
+	
+
+	\begin{exercise}[Alternate projections \& Dykstra]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}	
+	
+	\begin{exercise}[Mirror descent]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+
+	
+	%==================================
+	%								%||
+	\section{Background material and useful facts}			%||
+	\label{sec:background}
+	%============================	%||
+	%==================================
+	\subsection{Standard definitions}
+	smoothness, strong convexity...
+	\begin{definition}\label{def:ccp}
+	cpp
+	\end{definition}
+	\begin{definition}\label{def:smoothstronglyconvex}
+	sm str cvx (notation...)
+	\end{definition}
+	\begin{definition}\label{def:Lipschitzcvx}
+	lip cvx
+	\end{definition}
+	
+	\subsection{Interpolation/extension theorems}
+	This section gathers useful elements allowing to answer certain questions ...
+	\begin{theorem}
+	interpolation 1... (ccp)
+	\end{theorem}
+	\begin{theorem}\label{thm:interp_smoothstronglyconvex}
+	interpolation 2... (smooth str convex)
+	\end{theorem}
+	\begin{theorem}
+	interpolation 3... (smooth nonconvex)
+	\end{theorem}
+	\begin{theorem}
+	nonsmooth
+	\end{theorem}
+	\begin{theorem}
+	indicator
+	\end{theorem}
+\bibliographystyle{unsrt}
+\bibliography{bib_}{}
+\end{document}

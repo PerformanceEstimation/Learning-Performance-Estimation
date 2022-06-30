@@ -1,0 +1,246 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{hyperref}
+\usepackage{bibentry}
+\nobibliography*
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{fixltx2e}
+\usepackage[framed,numbered,autolinebreaks,useliterate]{mcode}
+
+%\usepackage{url,textcomp}
+
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\usepackage{enumerate}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{comment}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{pdfsync}
+%\usepackage[svgnames]{xcolor}
+\usepackage[tikz]{bclogo}
+\usepackage{pifont}
+\hypersetup{
+	colorlinks   = true, %Colours links instead of ugly boxes
+	urlcolor     = blue, %Colour for external hyperlinks
+	linkcolor    = blue, %Colour of internal links
+	citecolor   = blue %Colour of citations
+}
+
+\renewcommand{\headrulewidth}{1pt}
+\newcommand{\norm}[1]{{\left\lVert#1\right\rVert}}
+\newcommand{\normsq}[1]{{\left\lVert#1\right\rVert}^2}
+\newcommand{\Tr}[1]{{\trace\left(#1\right)}}
+\newcommand{\Rd}{\mathbb{R}^d}
+\newcommand{\inner}[2]{{\langle #1, #2\rangle}}
+\DeclareMathOperator{\dom}{dom}
+\DeclareMathOperator{\val}{val}
+\DeclareMathOperator{\epi}{epi}
+\DeclareMathOperator{\trace}{Tr}
+\DeclareMathOperator{\tr}{\trace}
+\DeclareMathOperator{\linspan}{span}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\FmuL}{\mathcal{F}_{\mu,L}}
+
+\newcommand{\bv}{\mathbf{v}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bg}{\mathbf{g}}
+\newcommand{\bfu}{\mathbf{f}}
+
+\newcommand{\real}{\mathbb{R}}
+\fancyhead[L]{}
+\fancyhead[R]{}
+
+\fancyfoot[C]{\textbf{page \thepage}}
+
+\newcommand{\caution}[1]{{\color{red}{\sc Caution:} #1}}
+\newcommand{\pesto}{{PESTO }}
+\newcommand{\pepit}{{PEPit }}
+
+\newtheorem{exercise}{Exercise}
+\newtheorem{theorem}{Theorem}
+
+\begin{document}
+	\author{Adrien Taylor\footnote{INRIA, SIERRA project-team, and D.I. Ecole normale sup\'erieure, Paris, France. Email: adrien.taylor@inria.fr}, Baptiste Goujaud\footnote{CMAP, École Polytechnique, Institut Polytechnique de Paris, France. Email: baptiste.goujaud@gmail.com}}
+	
+	\title{Worst-case analyses for first-order optimization methods}
+	\date{Current version: \today}
+	\maketitle
+	
+	\renewcommand*\contentsname{}
+	\setcounter{tocdepth}{2} \tableofcontents
+	
+
+
+	\section*{Foreword \& Acknowledgements}
+	Those notes were written for accompanying the \href{https://trade-opt-itn.eu/workshop.html}{TraDE-OPT workshop on algorithmic and continuous optimization}. If you have any comment, remark, or if you found a typo/mistake, please don't hesitate to feedback the authors!
+	
+	\paragraph*{Funding.} A. Taylor acknowledges support from the European Research Council (grant SEQUOIA 724063). This work was partly funded by the French government under management of Agence Nationale de la Recherche as part of the ``Investissements d’avenir'' program, reference ANR-19-P3IA-0001 (PRAIRIE 3IA Institute). The work of B. Goujaud is partially supported by ANR-19-CHIA-0002-01/chaire SCAI, and Hi!Paris. 
+	
+	\clearpage
+	%==================================
+	%								%||
+	\section{Introduction}			%||
+	%============================	%||
+	%==================================
+	
+	This document provides a series of exercises for getting familiar with ``performance estimation problems'' and the use of semidefinite programming for analyzing the worst-case behaviors of first-order optimization methods. An informal introduction can be found in this \href{https://francisbach.com/computer-aided-analyses/}{blog post}.
+	
+	\paragraph{Notations.}
+	%==================================
+	%								%||
+	\section{Exercises}			%||
+	%============================	%||
+	%==================================
+	\subsection{Warming up; modelling problems}
+	
+	take some stupid method and ask a series of questions about it...
+	
+	
+	\begin{exercise}[Gradient method]
+	The goal of this exercise is to show that the smallest $\tau$ such that the inequality
+	\[ \|x_{k+1}-x_\star\|^2 \leqslant \tau \|x_k-x_\star\|^2; \]
+	is true for any ... and $x_{k+1}=x_k-\frac{\gamma_k}{L} \nabla f(x_k)$ can be framed as a convex optimization problem.
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to XXX (remove denominator)
+	\item show that it is equivalent to the SDP XXXX
+	\item show that $\tau$ is a function of $\kappa=\frac{L}{\mu}$ only.
+	\item how should you adapt the SDP formulation to obtain bounds on 
+	\[ \|\nabla f(x_{k+1}\|^2 \leqslant \tau \|\nabla f(x_k)\|^2; \]
+	\item how should you adapt the SDP formulation to obtain bounds on 
+	\[ f(x_{k+1})-f(x_\star) \leqslant \tau (f(x_k)-f(x_\star)); \]
+	\item how should you adapt the SDP formulation to obtain bounds on 
+	\[ f(x_{k+1})-f(x_\star) \leqslant \tau \|x_0-x_\star\|^2; \]
+	\item using duality show that ... (dual SDP)
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+	\begin{exercise}[Acceleration]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+	
+	\begin{exercise}[Acceleration]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+	\begin{exercise}[Fixed-point iterations]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item using duality show that ... (dual SDP)
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+	
+	\begin{exercise}[Stochastic gradient descent]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item using duality show that ... (dual SDP)
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+	
+	\begin{exercise}[Proximal point method]
+	Show that the smallest $\tau$ such that the inequality
+	\[ ... \]
+	\begin{enumerate}
+	\item show that it can be formulated as ...
+	\item show that the previous problem can be framed using a discrete version...
+	\item show that it is equivalent to the SDP XXXX
+	\item numerical trials
+	\end{enumerate}
+	\end{exercise}
+	
+	
+	
+	\subsection{Numerical worst-case analyses}
+	All previous exercises: use the model for computing XXX... 
+	
+	here: give (1) class of problems (2) method (3) metrics (initial conditions/perf measure) and let the student do the job
+	
+	\begin{exercise}
+	Using PEPit or PESTO, compute ... ++ use documentation of PEPit ++ try to guess the numerics?
+	\begin{enumerate}
+	\item Gradient descent:
+	\item Acceleration:
+	\item Fixed-point: Halpern iteration
+	\item Proximal gradient
+	\end{enumerate}
+	\end{exercise}
+	
+	\subsubsection{Closed-form worst-case analyses}
+	
+
+	\subsubsection{Easy-to-solve}
+	\paragraph{Gradient method I}
+	\paragraph{Gradient method II}
+	\subsubsection{Easy-to-guess}
+	\paragraph{Gradient method}
+	\paragraph{Mirror descent/Bregman gradient}
+	\subsubsection{More tricky}
+	\paragraph{Douglas-Rachford}
+	
+	
+	%==================================
+	%								%||
+	\section{Background material and useful facts}			%||
+	%============================	%||
+	%==================================
+	\subsection{Standard definitions}
+	smoothness, strong convexity...
+	
+	\subsection{Interpolation/extension theorems}
+	This section gathers useful elements allowing to answer certain questions ...
+	\begin{theorem}
+	interpolation 1... (ccp)
+	\end{theorem}
+	\begin{theorem}
+	interpolation 2... (smooth str convex)
+	\end{theorem}
+	\begin{theorem}
+	interpolation 3... (smooth nonconvex)
+	\end{theorem}
+	
+\bibliographystyle{unsrt}
+\bibliography{bib_}{}
+\end{document}
