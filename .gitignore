@@ -138,3 +138,6 @@ dmypy.json
 *.pdfsync
 *.synctex.gz
 *.toc
+
+# Matlab temporary files
+*.m~
