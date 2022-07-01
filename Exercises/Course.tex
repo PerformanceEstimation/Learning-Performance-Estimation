@@ -109,18 +109,18 @@
 	
 	%==================================
 	%								%||
-	\section{Exercises}			%||
+	\section{Getting familial with performance estimation problems}			%||
 	%============================	%||
 	%==================================
 	
-	\begin{exercise}[Linear convergence of the gradient method] For this exercise, consider the problem of ``black-box'' minimization of a smooth strongly convex function:
+	\begin{exercise}[Gradient method] For this exercise, consider the problem of ``black-box'' minimization of a smooth strongly convex function:
 	\begin{equation}\label{eq:ex1_prob}
 	f_\star \triangleq \min_{x\in\mathbb{R}^d} f(x),
 	\end{equation}
 	where $f$ is $L$-smooth and $\mu$-strongly convex (see \Cref{def:smoothstronglyconvex}), and where $x_\star\triangleq \argmin_{x} f(x)$ and $f_\star\triangleq f(x_\star)$ its optimal value. For minimizing~\eqref{eq:ex1_prob} we use gradient descent with a pre-determined sequence of step sizes $\{\gamma_k\}_k$; that is, we iterate $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$.
 	The goal of this exercise is to compute $\tau(\mu,L,\gamma_k)$, a.k.a.\! a convergence rate, the smallest value such that the inequality
 	\[ \|x_{k+1}-x_\star\|^2 \leqslant \tau(\mu,L,\gamma_k) \|x_k-x_\star\|^2\]
-	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\frac{\gamma_k}{L} \nabla f(x_k)$, and $x_\star=\argmin_x f(x)$. 
+	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$, and $x_\star=\argmin_x f(x)$. 
 	\begin{enumerate}
 	\item Show that 
 	\begin{align*}
@@ -139,7 +139,7 @@
 			f_i=f(x_i)\quad & i=k,\star\\
 			g_i=f'(x_i)\quad & i=k,\star
 			\end{array}\right.\\
-		& x_{k+1}=x_k-\gamma  g_k\\
+		& x_{k+1}=x_k-\gamma_k  g_k\\
 		& g_\star=0.\\
 		\end{aligned}
 		\end{equation*}
@@ -149,7 +149,7 @@
 		\tau(\mu,L,\gamma_k)=\max_{\substack{x_k,x_{k+1},x_\star\\g_k,g_\star\\f_k,f_\star}} \quad & \frac{{\|x_{k+1}-x_\star\|}^2}{\|x_k-x_\star\|^2}\\
 		\text{s.t. } & f_\star\geqslant f_k+\inner{g_k}{x_\star-x_k}+\tfrac{1}{2L}\normsq{g_\star-g_k}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_\star-x_k-\tfrac{1}{L}(g_\star-g_k)}\\
 			&f_k\geqslant f_\star+\inner{g_\star}{x_k-x_\star}+\tfrac{1}{2L}\normsq{g_k-g_\star}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_k-x_\star-\tfrac{1}{L}(g_k-g_\star)}\\
-		& x_{k+1}=x_k-\gamma  g_k\\
+		& x_{k+1}=x_k-\gamma_k  g_k\\
 		& g_\star=0.\\
 		\end{aligned}
 		\end{equation*}
@@ -160,7 +160,7 @@
 		\text{s.t. } & f_\star\geqslant f_k+\inner{g_k}{x_\star-x_k}+\tfrac{1}{2L}\normsq{g_\star-g_k}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_\star-x_k-\tfrac{1}{L}(g_\star-g_k)}\\
 			&f_k\geqslant f_\star+\inner{g_\star}{x_k-x_\star}+\tfrac{1}{2L}\normsq{g_k-g_\star}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_k-x_\star-\tfrac{1}{L}(g_k-g_\star)}\\
 		& \|x_k-x_\star\|^2 = 1\\
-		& x_{k+1}=x_k-\gamma  g_k\\
+		& x_{k+1}=x_k-\gamma_k  g_k\\
 		& g_\star=0.\\
 		\end{aligned}
 		\end{equation*}
@@ -171,8 +171,8 @@
 			\langle g_k, x_k-x_\star\rangle & \| g_k\|^2
 			\end{bmatrix},\quad 	F \triangleq 			f_k-f_\star,
 			\end{align*}
-			(note that $G=[x_k-x_\star \quad g_k]^\top [x_k-x_\star \quad g_k]\succcurlyeq 0$. Show that previous problem can be reformulated as a $2\times 2$ SDP  
-			\begin{equation*}
+			(note that $G=[x_k-x_\star \quad g_k]^\top [x_k-x_\star \quad g_k]\succcurlyeq 0$). Show that $\tau(\mu,L,\gamma_k)$ can be computed using the following $2\times 2$ semidefinite program (SDP):  
+			\begin{equation}\label{ex1:eq:SDP_grad}
 			\begin{aligned}
 			\tau(\mu,L,\gamma_k)=\max_{G,\, F} \quad & G_{1,1}+\gamma_k ^2 G_{2,2}-2\gamma_k G_{1,2}\\
 			\text{s.t. } \quad & F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{L}{L-\mu}G_{1,2}\leqslant 0\\
@@ -180,9 +180,9 @@
 			&G_{1,1}= 1\\
 			&G\succcurlyeq 0,
 			\end{aligned}
-			\end{equation*}
+			\end{equation}
 	\item Define $h_k\triangleq \gamma_k L$ and $\kappa=L/\mu$. Show that $\tau(\mu,L,\gamma_k)=\tau(1/\kappa,1,h_k)$ (in other words: we can study the case $L=1$ only and deduce the dependence of $\tau$ on $L$ afterwards).
-	\item Complete the \href{aa}{\pepit code} (alternative in Matlab: \href{aa}{\pesto code}) for computing $\tau(\mu,L,\gamma_k)$ and compute its value for a few numerical values of $\mu$ and $\gamma_k$. 
+	\item Complete the \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Exercises - codes/Jupyter/Exercise1.ipynb}{\pepit code} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Exercises - codes/Matlab/Exercise1.m}{\pesto code}) for computing $\tau(\mu,L,\gamma_k)$ and compute its value for a few numerical values of $\mu$ and $\gamma_k$. 
 	\item Using Lagrangian duality with the following primal-dual pairing ($\tau,\lambda_1,\lambda_2$ are dual variables):
 	\begin{equation*}
 			\begin{aligned}
@@ -203,32 +203,43 @@
 			&0=\lambda_1-\lambda_2.
 		\end{aligned}
 		\end{equation}
-	Note that equility holds due to strong duality (for going further: prove strong duality using a Slater condition). 
+	Note that equility holds due to strong duality (for going further: obtain this dual formulation and prove strong duality using a Slater condition). 
 	
-	Show that any feasible point $(\tau,\lambda_1,\lambda_2)$ to~\eqref{eq:ex1_dual} corresponds to an upper bound on $\tau(\mu,L,\gamma_k)$ (i.e., $\tau(\mu,L,\gamma_k)\leqslant \tau$.
+	Show that any feasible point $(\tau,\lambda_1,\lambda_2)$ to~\eqref{eq:ex1_dual} corresponds to an upper bound on $\tau(\mu,L,\gamma_k)$ (i.e., $\tau(\mu,L,\gamma_k)\leqslant \tau$).
 	
-	\item Is there a simple closed form expression for $\tau(\mu,L,\gamma_k)$? (hint: can we solve~\eqref{eq:ex1_dual} in closed form?) Does it match the numerical values obtained using the previous codes for computing $\tau(\mu,L,\gamma_k)$ numerically?
-	\item How can we adapt the (primal) SDP formulation for computing the smallest possible $\tau$ such that the inequality
-	\[ \|\nabla f(x_{k+1}\|^2 \leqslant \tau \|\nabla f(x_k)\|^2\]
-	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\frac{\gamma_k}{L} \nabla f(x_k)$? Modify your previous code for computing such a bound. Can you guess a closed-form expression for it?
+	\item Is there a simple closed-form expression for $\tau(\mu,L,\gamma_k)$? (hint: can we solve~\eqref{eq:ex1_dual} in closed-form?) Does it match the numerical values obtained using the previous codes for computing $\tau(\mu,L,\gamma_k)$ numerically?
+	\item How can we adapt the SDP formulation~\eqref{ex1:eq:SDP_grad} for computing the smallest possible $\tau$ such that the inequality
+	\[ \|\nabla f(x_{k+1})\|^2 \leqslant \tau \|\nabla f(x_k)\|^2\]
+	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$? Modify your previous code for computing such a bound. Can you guess a closed-form expression for it?
 	
 	For going further: prove that feasible points to the (dual) problem
 	\begin{equation*}
 	...
 	\end{equation*}
 	correspond to upper bounds on $\tau$. Are there simple closed-form solution for this problem?
-	\item How can we adapt the (primal) SDP formulation for computing the smallest possible $\tau$ such that the inequality
+	\item How can we adapt the SDP formulation~\eqref{ex1:eq:SDP_grad} for computing the smallest possible $\tau$ such that the inequality
 	\[ f(x_{k+1})-f(x_\star) \leqslant \tau (f(x_{k})-f(x_\star))\]
-	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\frac{\gamma_k}{L} \nabla f(x_k)$? Modify your previous code for computing such a bound. Can you guess a closed-form expression for it?
+	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$? Modify your previous code for computing such a bound. Can you guess a closed-form expression for it?
 	
 	For going further: prove that feasible points to the (dual) problem
 	\begin{equation*}
 	...
 	\end{equation*}
 	correspond to upper bounds on $\tau$. Is there a simple closed-form solution for this problem?
+	\item Can we use this formalism for computing worst-case guarantees for a few iterations simultaneously? That is, to compute $\tau(\mu,L,\{\gamma_k\}_{k=0,\hdots,N-1})$ the smallest value such that the inequality
+	\[ \|x_{N}-x_\star\|^2 \leqslant \tau(\mu,L,\{\gamma_k\}_{k=0,\ldots,N-1}) \|x_0-x_\star\|^2\]
+	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_0,x_1,\ldots,x_N\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$ ($k=0,\ldots,N-1$), and $x_\star=\argmin_x f(x)$.
+	\item What happens if $\mu=0$? Can you isolate the problem on a simple counter example? You can, for example, use this \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Exercises - codes/Jupyter/Exercise1.ipynb}{\pepit code} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Exercises - codes/Matlab/Exercise1bis_dimreduction.m}{\pesto code}). Can you imagine a solution for avoiding such pathological behaviors in the analyses? What about studying guarantees of type\[ f(x_N)-f_\star \leqslant \tau(\mu,L,\{\gamma_k\}_{k=0,\ldots,N-1}) \|x_0-x_\star\|^2\]
+	instead? Modify your code for studying such worst-case bounds, and try it numerically for the choice $\gamma_k=1/L$, $L=1$ and $\mu=0$. Can you guess the depence on $N$?
 	\end{enumerate}
 	\end{exercise}
 
+	%==================================
+	%								%||
+	\section{Further exercises}			%||
+	%============================	%||
+	%==================================
+	
 	\begin{exercise}[Sublinear convergence of gradient descent and acceleration]
 	Show that the smallest $\tau$ such that the inequality
 	\[ ... \]
@@ -357,8 +368,26 @@
 	\end{enumerate}
 	\end{exercise}
 	
+	\begin{exercise}[Primal-dual methods]
+	Monotone inclusion (modelling KKT system) and VI
+	\begin{enumerate}
+	\item DRS
+	\item PRS
+	\item PPM
+	\item EG
+	\item OG
+	\item ...
+	\end{enumerate}
+	\end{exercise}
 
 	
+	\begin{exercise}[Adaptive methods]
+	\begin{enumerate}
+	\item ELS
+	\item GFOM
+	\item Polyak steps
+	\end{enumerate}
+	\end{exercise}
 	%==================================
 	%								%||
 	\section{Background material and useful facts}			%||
@@ -372,6 +401,9 @@
 	\end{definition}
 	\begin{definition}\label{def:smoothstronglyconvex}
 	sm str cvx (notation...)
+	\end{definition}
+	\begin{definition}\label{def:Lipschitzcvx}
+	lip cvx
 	\end{definition}
 	\begin{definition}\label{def:Lipschitzcvx}
 	lip cvx
@@ -394,6 +426,13 @@
 	\begin{theorem}
 	indicator
 	\end{theorem}
+	\subsection{Other useful inequalities}
+	\subsection{SDP duality}
+	++primal and dual SDP formulations
+	\begin{theorem}
+	slater
+	\end{theorem}
+	\subsection{Going further - readings}
 \bibliographystyle{unsrt}
 \bibliography{bib_}{}
 \end{document}

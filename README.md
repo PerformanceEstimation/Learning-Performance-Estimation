@@ -4,16 +4,14 @@ This repository contains teaching ressources about performance estimation proble
 
 A friendly informal introduction to this formalism is available in this [blog post](https://francisbach.com/computer-aided-analyses/).
 
+## Contributing
+If you want to correct some typos, or contribute to new exercises that you find relevant, please don't hesitate to do a pull request with your suggestions. We'll add you to the list of contributors.
+
+## Contributors
+- [**Baptiste Goujaud**](https://scholar.google.com/citations?user=93PAG2AAAAAJ&hl=en)
+- [**Adrien Taylor**](https://adrientaylor.github.io/)
+
 #### Content
 
 
 #### Organization
-
-
-#### Authors 
-- [**Baptiste Goujaud**](https://scholar.google.com/citations?user=93PAG2AAAAAJ&hl=en) 
-- [**Adrien Taylor**](https://adrientaylor.github.io/) 
-
-
-
-
