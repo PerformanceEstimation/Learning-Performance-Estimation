@@ -24,7 +24,7 @@ for i = 1:N
     x = x - gamma * g;
 end
 
-% COMPLETE the following lines
+% Initial condition & performance measure
 P.InitialCondition( (x0-xs)^2 <= 1);    % Initial condition ||x0-xs||^2<= 1
 P.PerformanceMetric( (x-xs)^2 );        % Performance metric ||x1-xs||^2
 
