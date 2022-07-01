@@ -101,9 +101,16 @@
 	
 	This document provides a series of exercises for getting familiar with ``performance estimation problems'' and the use of semidefinite programming for analyzing the worst-case behaviors of first-order optimization methods. An informal introduction can be found in this \href{https://francisbach.com/computer-aided-analyses/}{blog post}.
 	
-	Notation and necessary background material is provided in \Cref{sec:background}.
 	
-	Note that worst-case analysis is a confortable tool... but it might not always be representative of reality (but when it is... it is nice because confortable!)
+In short, considering problems of the form $\min_x F(x)$ (we generally denote an optimal solution by $x_\star\in\argmin_x F(x)$), our goal is to access ``a priori'' the quality of the output (denoted by $x_k$) of some iterative algorithm. There are typically different ways of doing so, which might or might not be relevent depending on the target applications. In first-order optimization, we often want to upper bound the quality of $x_k$ in one of the following terms (which we all ideally would like to be as small as possible): $\|x_k-x_\star\|^2$, $\|\nabla f(x_k)\|^2$, or $f(x_k)-f(x_\star)$. There are of course other possibilities.
+
+So, our goal is to assess the quality of $x_k$ by providing hopefully meaningfull upper bounds on (one of) those quantities. For doing so, we consider classes of problems (i.e., sets of assumptions on $F$), and perform worst-case analyses (i.e., we want the bound to be valid for all $F$ satisfying the set of assumptions at hand).
+	
+After studying the performance estimation framework for optimization methods, one can realize that it has a broader applicability for performing worst-case studies in numerical analysis (see exercises in \Cref{s:furtherex} and suggested readings in \Cref{s:readings} for further information). 
+
+Notation and necessary background material is provided in \Cref{sec:background}.
+	
+
 	
 
 	
@@ -207,36 +214,50 @@
 	
 	Show that any feasible point $(\tau,\lambda_1,\lambda_2)$ to~\eqref{eq:ex1_dual} corresponds to an upper bound on $\tau(\mu,L,\gamma_k)$ (i.e., $\tau(\mu,L,\gamma_k)\leqslant \tau$).
 	
-	\item Is there a simple closed-form expression for $\tau(\mu,L,\gamma_k)$? (hint: can we solve~\eqref{eq:ex1_dual} in closed-form?) Does it match the numerical values obtained using the previous codes for computing $\tau(\mu,L,\gamma_k)$ numerically?
+	\item Is there a simple closed-form expression for $\tau(\mu,L,\gamma_k)$? Hint \#1: can we solve~\eqref{eq:ex1_dual} in closed-form? Hint \#2: the objective is linear in $\tau$; the optimal solution (if it exists) is therefore necessarily on the boundary of the PSD cone; hence $\tau$ must be such that at least one eigenvalue of $S$ is zero.
+	
+	Does it match the numerical values obtained using the previous codes for computing $\tau(\mu,L,\gamma_k)$ numerically?
 	\item How can we adapt the SDP formulation~\eqref{ex1:eq:SDP_grad} for computing the smallest possible $\tau$ such that the inequality
 	\[ \|\nabla f(x_{k+1})\|^2 \leqslant \tau \|\nabla f(x_k)\|^2\]
 	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$? Modify your previous code for computing such a bound. Can you guess a closed-form expression for it?
 	
-	For going further: prove that feasible points to the (dual) problem
-	\begin{equation*}
-	...
-	\end{equation*}
-	correspond to upper bounds on $\tau$. Are there simple closed-form solution for this problem?
+	For going further: a dual problem is given by
+	\begin{equation}\label{eq:ex1_dual2}	 
+		\begin{aligned}
+			\min_{\tau,\lambda_1,\lambda_2\geqslant 0} & \,\tau\\
+			\text{s.t. }& S=\begin{bmatrix}
+		\tau+\lambda_1 \frac{(1-\gamma_k L)(1-\gamma_k \mu)}{L-\mu} & -\lambda_1\frac{2-\gamma_k(L+\mu)}{2(L-\mu)}\\
+		-\lambda_1\frac{2-\gamma_k(L+\mu)}{2(L-\mu)} & \frac{\lambda_1}{L-\mu}-1
+			\end{bmatrix}\succcurlyeq 0\\
+			&0=\lambda_1-\lambda_2.
+		\end{aligned}
+		\end{equation} Is there a simple closed-form solution for this problem? 
 	\item How can we adapt the SDP formulation~\eqref{ex1:eq:SDP_grad} for computing the smallest possible $\tau$ such that the inequality
 	\[ f(x_{k+1})-f(x_\star) \leqslant \tau (f(x_{k})-f(x_\star))\]
 	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$? Modify your previous code for computing such a bound. Can you guess a closed-form expression for it?
 	
-	For going further: prove that feasible points to the (dual) problem
+For going further: using the following primal-dual pairing
 	\begin{equation*}
-	...
+	...,
 	\end{equation*}
-	correspond to upper bounds on $\tau$. Is there a simple closed-form solution for this problem?
+a dual problem is given by
+	\begin{equation*}
+	...,
+	\end{equation*}
+	 Is there a simple closed-form solution for this problem?
 	\item Can we use this formalism for computing worst-case guarantees for a few iterations simultaneously? That is, to compute $\tau(\mu,L,\{\gamma_k\}_{k=0,\hdots,N-1})$ the smallest value such that the inequality
 	\[ \|x_{N}-x_\star\|^2 \leqslant \tau(\mu,L,\{\gamma_k\}_{k=0,\ldots,N-1}) \|x_0-x_\star\|^2\]
 	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_0,x_1,\ldots,x_N\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$ ($k=0,\ldots,N-1$), and $x_\star=\argmin_x f(x)$.
 	\item What happens if $\mu=0$? Can you isolate the problem on a simple counter example? You can, for example, use this \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Exercises - codes/Jupyter/Exercise1.ipynb}{\pepit code} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Exercises - codes/Matlab/Exercise1bis_dimreduction.m}{\pesto code}). Can you imagine a solution for avoiding such pathological behaviors in the analyses? What about studying guarantees of type\[ f(x_N)-f_\star \leqslant \tau(\mu,L,\{\gamma_k\}_{k=0,\ldots,N-1}) \|x_0-x_\star\|^2\]
-	instead? Modify your code for studying such worst-case bounds, and try it numerically for the choice $\gamma_k=1/L$, $L=1$ and $\mu=0$. Can you guess the depence on $N$?
+	instead? Modify your code for studying such worst-case bounds, and try it numerically for the choice $\gamma_k=1/L$, $L=1$ and $\mu=0$. Guess the depence on $N$ based on a few numerical trials.
+	\item Based on your current experience, what are, according to you, the key elements which allowed casting the worst-case analysis as an SDP?
+	\item Can you write a standard proof for the linear convergence in terms of distance to an optimal point? in terms of convergence in gradient norm? and function values?
 	\end{enumerate}
 	\end{exercise}
 
 	%==================================
 	%								%||
-	\section{Further exercises}			%||
+	\section{Further exercises}\label{s:furtherex}		%||
 	%============================	%||
 	%==================================
 	
@@ -244,9 +265,17 @@
 	Show that the smallest $\tau$ such that the inequality
 	\[ ... \]
 	\begin{enumerate}
-	\item show that it can be formulated as ...
-	\item show that the previous problem can be framed using a discrete version...
-	\item numerical trials (code: XXX). Ex: modify the code to compute worst gradient norm, and worst best gradient norm among iterates
+	\item show that it can be formulated as an SDP.
+	\item numerical trials (code: XXX).
+	\item Can we compute guarantees of type 
+	\[ \min_{0\leqslant i\leqslant N} \|\nabla f(x_i)\|^2\leqslant \tau \|x_0-x_\star\|^2\]
+	using semidefinite programming?
+	\item Modify your code for computing the worst-case ratios $\frac{\min_{0\leqslant i\leqslant N}\|\nabla f(x_i)\|^2}{\|x_0-x_\star\|^2}$ and $\frac{\|\nabla f(x_N)\|^2}{\|x_0-x_\star\|^2}$ as functions of $N$. What can you conclude?
+	\item Modify your code for computing worst-case guarantees for the following variant of Nesterov's accelerated gradient method:
+	\begin{equation*}
+	XXX
+	\end{equation*}
+	in terms of the same ratios, and compare them to those of gradient descent (as functions of $N$). What can you conclude?
 	\end{enumerate}
 	\end{exercise}
 	
@@ -357,37 +386,7 @@
 	\end{enumerate}
 	\end{exercise}	
 	
-	\begin{exercise}[Mirror descent]
-	Show that the smallest $\tau$ such that the inequality
-	\[ ... \]
-	\begin{enumerate}
-	\item show that it can be formulated as ...
-	\item show that the previous problem can be framed using a discrete version...
-	\item show that it is equivalent to the SDP XXXX
-	\item numerical trials
-	\end{enumerate}
-	\end{exercise}
 	
-	\begin{exercise}[Primal-dual methods]
-	Monotone inclusion (modelling KKT system) and VI
-	\begin{enumerate}
-	\item DRS
-	\item PRS
-	\item PPM
-	\item EG
-	\item OG
-	\item ...
-	\end{enumerate}
-	\end{exercise}
-
-	
-	\begin{exercise}[Adaptive methods]
-	\begin{enumerate}
-	\item ELS
-	\item GFOM
-	\item Polyak steps
-	\end{enumerate}
-	\end{exercise}
 	%==================================
 	%								%||
 	\section{Background material and useful facts}			%||
@@ -432,7 +431,17 @@
 	\begin{theorem}
 	slater
 	\end{theorem}
-	\subsection{Going further - readings}
+	\section{Going further - suggested readings}\label{s:readings}
+	\paragraph{Designing methods.}
+	\paragraph{Adaptive methods.}
+	\paragraph{Primal-dual methods.} Ernest'
+	\paragraph{Mirror descent.} Radu's
+	\paragraph{Identifying lower complexity bounds.} QG, Radu's
+	\paragraph{Continuous-time analyses.}
+	\paragraph{Identifying counter-examples}
+	\paragraph{Other analyses.}
+	
+	
 \bibliographystyle{unsrt}
 \bibliography{bib_}{}
 \end{document}
