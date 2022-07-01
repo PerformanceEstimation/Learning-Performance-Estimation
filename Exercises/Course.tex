@@ -247,14 +247,16 @@ Notation and necessary background material is provided in \Cref{sec:background}.
 	&0=\tau-\lambda_1+\lambda_2-\lambda_5+\lambda_6\\
 	&1=-\lambda_3+\lambda_4+\lambda_5-\lambda_6,
 	\end{aligned}
-	\end{equation}}where ``$*$'' denotes symmetrical elements in the PSD matrix. Is there a simple closed-form solution for this problem? Hint \#1: plot some values for the multipliers; hint \#2: pick $\lambda_1=\lambda_3=\lambda_6=0$; does the problem simplify?
+	\end{equation}}where ``$*$'' denotes symmetrical elements in the PSD matrix. Is there a simple closed-form solution for this problem? Note that this SDP is already coded \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Exercises - codes/Jupyter/Exercise1.ipynb}{here} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Exercises - codes/Matlab/Exercise1_SDP_functionvalues.m}{here})
+	
+	Hint \#1: plot some values for the multipliers; hint \#2: pick $\lambda_1=\lambda_3=\lambda_6=0$; does the problem simplify?
 	\item Can we use this formalism for computing worst-case guarantees for a few iterations simultaneously? That is, to compute $\tau(\mu,L,\{\gamma_k\}_{k=0,\hdots,N-1})$ the smallest value such that the inequality
 	\[ \|x_{N}-x_\star\|^2 \leqslant \tau(\mu,L,\{\gamma_k\}_{k=0,\ldots,N-1}) \|x_0-x_\star\|^2\]
 	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_0,x_1,\ldots,x_N\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$ ($k=0,\ldots,N-1$), and $x_\star=\argmin_x f(x)$.
-	\item What happens if $\mu=0$? Can you isolate the problem on a simple counter example? You can, for example, use this \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Exercises - codes/Jupyter/Exercise1.ipynb}{\pepit code} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Exercises - codes/Matlab/Exercise1bis_dimreduction.m}{\pesto code}). Can you imagine a solution for avoiding such pathological behaviors in the analyses? What about studying guarantees of type\[ f(x_N)-f_\star \leqslant \tau(\mu,L,\{\gamma_k\}_{k=0,\ldots,N-1}) \|x_0-x_\star\|^2\]
+	\item What happens if $\mu=0$? Can you isolate the problem on a simple counter example? You can, for example, use this \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Exercises - codes/Jupyter/Exercise1.ipynb}{\pepit code} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Exercises - codes/Matlab/Exercise1_dimReduction.m}{\pesto code}). Can you imagine a solution for avoiding such pathological behaviors in the analyses? What about studying guarantees of type\[ f(x_N)-f_\star \leqslant \tau(\mu,L,\{\gamma_k\}_{k=0,\ldots,N-1}) \|x_0-x_\star\|^2\]
 	instead? Modify your code for studying such worst-case bounds, and try it numerically for the choice $\gamma_k=1/L$, $L=1$ and $\mu=0$. Guess the depence on $N$ based on a few numerical trials.
 	\item Based on your current experience, what are, according to you, the key elements which allowed casting the worst-case analysis as an SDP?
-	\item Can you write a standard proof for the linear convergence in terms of distance to an optimal point? in terms of convergence in gradient norm? and function values?
+	\item Given the optimal value of the multipliers $\tau,\lambda_1,\lambda_2$ in~\eqref{eq:ex1_dual}, can you write a ``direct'' proof for the linear convergence in terms of distance to an optimal point without resorting on any SDP formulation?
 	\end{enumerate}
 	\end{exercise}
 
