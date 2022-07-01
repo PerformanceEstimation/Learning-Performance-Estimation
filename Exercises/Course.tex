@@ -30,7 +30,6 @@
 \usepackage{color}
 \usepackage{pdfsync}
 %\usepackage[svgnames]{xcolor}
-\usepackage[tikz]{bclogo}
 \usepackage{pifont}
 \hypersetup{
 	colorlinks   = true, %Colours links instead of ugly boxes
@@ -46,22 +45,10 @@
 \newcommand{\Tr}[1]{{\trace\left(#1\right)}}
 \newcommand{\Rd}{\mathbb{R}^d}
 \newcommand{\inner}[2]{{\langle #1, #2\rangle}}
-\DeclareMathOperator{\dom}{dom}
-\DeclareMathOperator{\val}{val}
-\DeclareMathOperator{\epi}{epi}
-\DeclareMathOperator{\trace}{Tr}
-\DeclareMathOperator{\tr}{\trace}
 \DeclareMathOperator{\linspan}{span}
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator{\rank}{rank}
-\DeclareMathOperator{\FmuL}{\mathcal{F}_{\mu,L}}
 
-\newcommand{\bv}{\mathbf{v}}
-\newcommand{\bx}{\mathbf{x}}
-\newcommand{\bg}{\mathbf{g}}
-\newcommand{\bfu}{\mathbf{f}}
-
-\newcommand{\real}{\mathbb{R}}
 \fancyhead[L]{}
 \fancyhead[R]{}
 
@@ -236,15 +223,31 @@ Notation and necessary background material is provided in \Cref{sec:background}.
 	\[ f(x_{k+1})-f(x_\star) \leqslant \tau (f(x_{k})-f(x_\star))\]
 	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$? Modify your previous code for computing such a bound. Can you guess a closed-form expression for it?
 	
-For going further: using the following primal-dual pairing
-	\begin{equation*}
-	...,
-	\end{equation*}
-a dual problem is given by
-	\begin{equation*}
-	...,
-	\end{equation*}
-	 Is there a simple closed-form solution for this problem?
+	For going further: using the following primal-dual pairing
+	{\scriptsize\begin{equation*}
+	\begin{aligned}
+	& f(x_0)\geqslant f(x_\star)+\tfrac{1}{2L}\|\nabla f(x_0)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_0-x_\star-\tfrac1L \nabla f(x_0)\|^2&&:\lambda_1\\
+	& f(x_\star)\geqslant f(x_0)+\inner{\nabla f(x_0)}{x_\star-x_0}+\tfrac{1}{2L}\|\nabla f(x_0)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_0-x_\star-\tfrac1L \nabla f(x_0)\|^2&&:\lambda_2\\
+	& f(x_1)\geqslant f(x_\star)+\tfrac{1}{2L}\|\nabla f(x_1)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_1-x_\star-\tfrac1L \nabla f(x_1)\|^2&&:\lambda_3\\
+	& f(x_\star)\geqslant f(x_1)+\inner{\nabla f(x_1)}{x_\star-x_1}+\tfrac{1}{2L}\|\nabla f(x_1)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_1-x_\star-\tfrac1L \nabla f(x_1)\|^2&&:\lambda_4\\
+	& f(x_0)\geqslant f(x_1)+\inner{\nabla f(x_1)}{x_0-x_1}+\tfrac{1}{2L}\|\nabla f(x_0)-\nabla f(x_1)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_1-x_0-\tfrac1L (\nabla f(x_1)-\nabla f(x_0))\|^2&&:\lambda_5\\
+	& f(x_1)\geqslant f(x_0)+\inner{\nabla f(x_0)}{x_1-x_0}+\tfrac{1}{2L}\|\nabla f(x_0)-\nabla f(x_1)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_1-x_0-\tfrac1L (\nabla f(x_1)-\nabla f(x_0))\|^2 &&:\lambda_6\\
+	&f(x_0)-f(x_\star)= 1&&:\tau
+	\end{aligned}
+	\end{equation*}}
+	a dual problem is given by
+	{\scriptsize\begin{equation}\label{eq:ex1_dual3}	 
+	\begin{aligned}
+	\min_{\tau,\lambda_1,\lambda_2\geqslant 0} & \,\tau\\
+	\text{s.t. }& \begin{bmatrix}
+	\frac{\mu  L (\lambda_1+\lambda_2+\lambda_3+\lambda_4)}{L-\mu } & -\frac{L (\lambda_2+\gamma  \mu  (\lambda_3+\lambda_4))+\mu  \lambda_1}{L-\mu } & -\frac{L \lambda_4+\mu  \lambda_3}{L-\mu } \\
+	* & \frac{\gamma  \mu  (\gamma  L (\lambda_3+\lambda_4+\lambda_5+\lambda_6)-2 \lambda_5)-2 \gamma  L \lambda_6+\lambda_1+\lambda_2+\lambda_5+\lambda_6}{L-\mu } & \frac{\gamma  L \lambda_4+\lambda_5 (\gamma  L-1)+\gamma  \mu  (\lambda_3+\lambda_6)-\lambda_6}{L-\mu } \\
+	* & * & \frac{\lambda_3+\lambda_4+\lambda_5+\lambda_6}{L-\mu }
+	\end{bmatrix}\succcurlyeq 0\\
+	&0=\tau-\lambda_1+\lambda_2-\lambda_5+\lambda_6\\
+	&1=-\lambda_3+\lambda_4+\lambda_5-\lambda_6,
+	\end{aligned}
+	\end{equation}}where ``$*$'' denotes symmetrical elements in the PSD matrix. Is there a simple closed-form solution for this problem? Hint \#1: plot some values for the multipliers; hint \#2: pick $\lambda_1=\lambda_3=\lambda_6=0$; does the problem simplify?
 	\item Can we use this formalism for computing worst-case guarantees for a few iterations simultaneously? That is, to compute $\tau(\mu,L,\{\gamma_k\}_{k=0,\hdots,N-1})$ the smallest value such that the inequality
 	\[ \|x_{N}-x_\star\|^2 \leqslant \tau(\mu,L,\{\gamma_k\}_{k=0,\ldots,N-1}) \|x_0-x_\star\|^2\]
 	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_0,x_1,\ldots,x_N\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$ ($k=0,\ldots,N-1$), and $x_\star=\argmin_x f(x)$.
@@ -432,6 +435,7 @@ a dual problem is given by
 	slater
 	\end{theorem}
 	\section{Going further - suggested readings}\label{s:readings}
+	\paragraph{Lyapunov analyses.}
 	\paragraph{Designing methods.}
 	\paragraph{Adaptive methods.}
 	\paragraph{Primal-dual methods.} Ernest'
