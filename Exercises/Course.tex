@@ -93,7 +93,8 @@
 So, our goal is to assess the quality of $x_k$ by providing hopefully meaningfull upper bounds on at least one of those quantities. For doing so, we consider classes of problems (i.e., sets of assumptions on $F$), and perform worst-case analyses (i.e., we want the bound to be valid for all $F$ satisfying the set of assumptions at hand). The following exercises try to shed a bit of light on this topic, by examplifying a principled approach to construct such worst-case convergence bounds using the so-called ``performance estimation framework'', introduced by Drori and Teboulle in~\cite{drori2014performance}. This document presents the performance estimation problem using the formalism from Taylor, Hendrickx, and Glineur~\cite{taylor2015exact,taylor2015smooth}.
 
 \paragraph{Notations.} We denote by $\inner{\cdot}{\cdot}:\mathbb{R}^d\times \mathbb{R}^d\rightarrow\mathbb{R} $ the standard Euclidean inner product, and by $\|\cdot \|^2:\mathbb{R}^d\rightarrow\mathbb{R}$ the standard Euclidean norm, that is, the induced norm: for any $x\in\mathbb{R}^d$: $\|x\|^2=\inner{x}{x}$. Other notations are defined throughout the text.
-		
+
+\paragraph{Packages}... pesto/pepit, modelling yalmip cvx... solvers mosek et co... symbolique sympy
 	%==================================
 	%								%||
 	\section{Getting familiar with base performance estimation problems}	\label{s:pep_basis}	%||
@@ -407,7 +408,13 @@ The goal of the following exercise is to link what we have seen so far with ``cl
 	
 	Does it match the numerical values obtained using the previous codes for computing $\tau(\mu,L,\gamma_k)$ numerically?
 	
-	\item Given the optimal value of the multipliers $\tau,\lambda_1,\lambda_2$ in~\eqref{eq:ex1_dual}, can you write a ``direct'' proof for the linear convergence in terms of distance to an optimal point without resorting on any SDP formulation?
+	\correction{The expression is $\tau(\mu,L,\gamma_k)=\max\{(1-\gamma_k L)^2,(1-\gamma_k\mu)^2\}$. Because the problem has a linear objective, $\tau$ must such that the solution is on the boundary of the PSD cone. That is, one can find an expression of $\tau$ as a function of the other variables and parameters by solving $\det(S)=0$. There are then two possibilities:
+	\begin{enumerate}
+	\item either the other eigenvalue of $S$ is zero (but one can observe, numerically, that the rank of $S$ is empirically equal to $1$ for non-optimal stepsizes)
+	\item either $\lambda_1$ can be chosen for minimizing the expression of $\tau$.
+	\end{enumerate} this can be done using sympy (++ notebook dans enonce!).}
+	
+	\item Consider $\gamma_k=\frac{1}{L}$ for simplicity. Given the optimal value of the multipliers $\tau,\lambda_1,\lambda_2$ in~\eqref{eq:ex1_dual}, can you write a ``direct'' proof for the linear convergence in terms of distance to an optimal point without resorting on any SDP formulation?
 	
 	\item A corresponding dual problem for the worst-case ratio $\frac{\|\nabla f(x_{k+1})\|^2}{\|\nabla f(x_k)\|^2}$ given by
 	\begin{equation}\label{eq:ex1_dual2}	 
@@ -501,6 +508,8 @@ The goal of the following exercise is to link what we have seen so far with ``cl
 	with $g_{k+1}\in\partial f(x_{k+1})$ (the subdifferential of $f$ at $x_{k+1}$; i.e., $g_{k+1}$ is a subgradient at $x_{k+1}$). Can you reformulate the problem of finding a worst-case example for the ratio $\frac{f(x_N)-f_\star}{\|x_0-x_\star\|^2}$ as an SDP? What are the key ingredient for arriving to it?
 	\item Provide a \pepit or \pesto code for computing those ratios, and experiment with it.
 	\item Guess the dependence of the worst-case ratio on $\gamma$ and on $N$; confirm your findings using numerics.
+	
+	\item Can you guess the shape of a worst-case function? You may want to use an heuristic for finding lower rank worst-case examples.
 	\end{enumerate}
 	\end{exercise}
 	
@@ -528,7 +537,7 @@ The goal of the following exercise is to link what we have seen so far with ``cl
 	\begin{enumerate}
 	\item For each method, how can you write the problem of computing the worst-case for the value of $f(x_N)-f_\star$? (note that we do not need a denominator as the diameter $D<\infty$ is bounded).
 	\item For each method, how can we sample the problem? (at which points do we need to sample each function?)
-	\item Write a \pepit or \pesto code and guess the dependence on the iteration counter $N$ of the worst-case $f(x_N)-f_\star$ for each of those methods.
+	\item Write a \pepit or \pesto code and guess the dependence on the iteration counter $N$ of the worst-case $f(x_N)-f_\star$ for each of those methods. What are the dependences on $D$ and $L$?
 	\end{enumerate}
 	\end{exercise}	
 

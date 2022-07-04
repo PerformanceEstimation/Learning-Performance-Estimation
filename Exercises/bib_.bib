@@ -30,15 +30,22 @@ pages={451-482}
 	publisher={SIAM}
 }
 
-
-%%% NOT USED
+% Solvers & packages
 @INPROCEEDINGS {Article:Yalmip,
     AUTHOR = { J. L\"{o}fberg },
     TITLE = { {YALMIP} : A Toolbox for Modeling and Optimization in {MATLAB} },
     BOOKTITLE = { Proceedings of the CACSD Conference },
     YEAR = { 2004 }
 }
-
+@article{diamond2016cvxpy,
+  author  = {Steven Diamond and Stephen Boyd},
+  title   = {{CVXPY}: {A} {P}ython-embedded modeling language for convex optimization},
+  journal = {Journal of Machine Learning Research},
+  year    = {2016},
+  volume  = {17},
+  number  = {83},
+  pages   = {1--5},
+}
 @article{Article:Sedumi,
     author = {Sturm, J. F.},
     journal = {Optimization Methods and Software},
@@ -55,16 +62,122 @@ pages={451-482}
   volume={54},
   year={2010}
 }
-@article{Article:sdpt3,
-  title={SDPT3—a MATLAB software package for semidefinite programming, version 1.3},
-  author={Toh, K.-C. and Todd, M.J. and T{\"u}t{\"u}nc{\"u}, R.H.},
-  journal={Optimization methods and software},
-  volume={11},
-  number={1-4},
-  pages={545--581},
-  year={1999},
-  publisher={Taylor \& Francis}
+@article{goujaud2022pepit,
+  title={PEPit: computer-assisted worst-case analyses of first-order optimization methods in Python},
+  author={Goujaud, Baptiste and Moucer, C{\'e}line and Glineur, Fran{\c{c}}ois and Hendrickx, Julien and Taylor, Adrien and Dieuleveut, Aymeric},
+  journal={arXiv preprint 2201.04040},
+  year={2022}
 }
+
+@inproceedings{pesto2017,
+	title={Performance {E}stimation {T}oolbox ({PESTO}): automated worst-case analysis of first-order optimization methods},
+	author={Taylor, A. and Hendrickx, J. and Glineur, F.},
+	booktitle={Proceedings of the 56th IEEE Conference on Decision and Control (CDC 2017)},
+	year={2017}
+}
+@article{meurer2017sympy,
+  title={SymPy: symbolic computing in Python},
+  author={Meurer, Aaron and Smith, Christopher P and Paprocki, Mateusz and {\v{C}}ert{\'\i}k, Ond{\v{r}}ej and Kirpichev, Sergey B and Rocklin, Matthew and Kumar, AMiT and Ivanov, Sergiu and Moore, Jason K and Singh, Sartaj and others},
+  journal={PeerJ Computer Science},
+  volume={3},
+  pages={e103},
+  year={2017},
+  publisher={PeerJ Inc.}
+}
+
+
+%% REFS for methods
+
+
+@article{guler1991convergence,
+	title={On the convergence of the proximal point algorithm for convex minimization},
+	author={G{\"u}ler, O.},
+	journal={SIAM Journal on Control and Optimization},
+	volume={29},
+	number={2},
+	pages={403--419},
+	year={1991},
+	publisher={SIAM}
+}
+
+@inproceedings{jaggi2013revisiting,
+	title={Revisiting Frank-Wolfe: Projection-Free Sparse Convex Optimization},
+	author={Jaggi, M.},
+	booktitle={International Conference on Machine Learning (ICML)},
+	pages={427--435},
+	year={2013}
+}
+@book{Book:Nesterov2,
+	title = "Lectures on Convex Optimization",
+	author = "Nesterov, Y.",
+	series = "Springer Optimization and Its Applications",
+	publisher = "Springer International Publishing",
+	year = 2018
+}
+@article{Nesterov:1983wy,
+	author = {Nesterov, Y.},
+	journal = {Soviet Mathematics Doklady},
+	pages = {372--376},
+	priority = {2},
+	title = {{A method of solving a convex programming problem with convergence rate O($1/k^2$))}},
+	volume = {27},
+	year = {1983}
+}
+@inproceedings{ghadimi2015global,
+  title={Global convergence of the heavy-ball method for convex optimization},
+  author={Ghadimi, Euhanna and Feyzmahdavian, Hamid Reza and Johansson, Mikael},
+  booktitle={2015 European control conference (ECC)},
+  pages={310--315},
+  year={2015},
+  organization={IEEE}
+}
+@book{Book:polyak1987,
+	title={Introduction to Optimization},
+	author={Polyak, B. T.},
+	year={1987},
+	publisher={Optimization Software New York}
+}
+@article{polyak1964some,
+	title={Some methods of speeding up the convergence of iteration methods},
+	author={Polyak, B. T.},
+	journal={USSR Computational Mathematics and Mathematical Physics},
+	volume={4},
+	number={5},
+	pages={1--17},
+	year={1964},
+	publisher={Elsevier}
+}
+@article{frank1956algorithm,
+	title={An algorithm for quadratic programming},
+	author={Frank, M. and Wolfe, P.},
+	journal={Naval research logistics quarterly},
+	volume={3},
+	number={1-2},
+	pages={95--110},
+	year={1956},
+	publisher={Wiley Online Library}
+}@article{nesterov2013gradient,
+	title={Gradient methods for minimizing composite functions},
+	author={Nesterov, Y.},
+	journal={Mathematical Programming},
+	volume={140},
+	number={1},
+	pages={125--161},
+	year={2013},
+	publisher={Springer}
+}
+@article{taylor2018exact,
+	title={Exact worst-case convergence rates of the proximal gradient method for composite convex minimization},
+	author={Taylor, A. B. and Hendrickx, J. M. and Glineur, F.},
+	journal={Journal of Optimization Theory and Applications},
+	volume={178},
+	number={2},
+	pages={455--476},
+	year={2018},
+	publisher={Springer}
+}
+
+%%% NOT USED
 
 @book{Shor:Subgradient,
 	added-at = {2011-08-17T16:08:47.000+0200},
@@ -80,50 +193,8 @@ pages={451-482}
 	title = {Minimization methods for non-differentiable functions},
 	year = 1985
 }
-@inproceedings{jaggi2013revisiting,
-	title={Revisiting Frank-Wolfe: Projection-Free Sparse Convex Optimization},
-	author={Jaggi, M.},
-	booktitle={International Conference on Machine Learning (ICML)},
-	pages={427--435},
-	year={2013}
-}
 
 
-
-@article{Article:Drori,
-year={2014},
-issn={0025-5610},
-journal={Mathematical Programming},
-volume={145},
-number={1-2},
-title={Performance of first-order methods for smooth convex minimization: a novel approach},
-publisher={Springer Berlin Heidelberg},
-keywords={Performance of first-order algorithms; Rate of convergence; Complexity; Smooth convex minimization; Duality; Semidefinite relaxations; Fast gradient schemes; Heavy Ball method; 90C60; 49M25; 90C25; 90C20; 90C22; 68Q25},
-author={Drori, Y. and Teboulle, M.},
-pages={451-482},
-language={English}
-}
-
-@article{taylor2015smooth,
-  title={Smooth strongly convex interpolation and exact worst-case performance of first-order methods},
-  author={Taylor, A. B. and Hendrickx, J. M. and Glineur, F.},
-  journal={Mathematical Programming},
-  volume={161},
-  number={1-2},
-  pages={307--345},
-  year={2017},
-  publisher={Springer}
-}
-@article{taylor2015exact,
-	title={Exact worst-case performance of first-order methods for composite convex optimization},
-	author={Taylor, A. B. and Hendrickx, J. M. and Glineur, F.},
-	journal={SIAM Journal on Optimization},
-	volume={27},
-	number={3},
-	pages={1283--1313},
-	year={2017},
-	publisher={SIAM}
-}
 
 
 @inproceedings{moulines2011non,
@@ -193,16 +264,6 @@ language={English}
 	number={4},
 	pages={649--664},
 	year={1992},
-	publisher={SIAM}
-}
-@article{guler1991convergence,
-	title={On the convergence of the proximal point algorithm for convex minimization},
-	author={G{\"u}ler, O.},
-	journal={SIAM Journal on Control and Optimization},
-	volume={29},
-	number={2},
-	pages={403--419},
-	year={1991},
 	publisher={SIAM}
 }
 @article{mann1953mean,
@@ -325,12 +386,6 @@ pages="321--351"
   year={2016},
   publisher={SIAM}
 }
-@inproceedings{pesto2017,
-	title={Performance {E}stimation {T}oolbox ({PESTO}): automated worst-case analysis of first-order optimization methods},
-	author={Taylor, A. and Hendrickx, J. and Glineur, F.},
-	booktitle={Proceedings of the 56th IEEE Conference on Decision and Control (CDC 2017)},
-	year={2017}
-}
 @inproceedings{taylor2018lyapunov,
 	author    = {Taylor, A. and Van Scoy, B. and Lessard, L.},
 	title     = {Lyapunov functions for first-order methods: {T}ight automated convergence guarantees},
@@ -347,32 +402,7 @@ pages="321--351"
 	year={2015},
 	publisher={Springer}
 }
-@book{Book:polyak1987,
-	title={Introduction to Optimization},
-	author={Polyak, B. T.},
-	year={1987},
-	publisher={Optimization Software New York}
-}
-@article{polyak1964some,
-	title={Some methods of speeding up the convergence of iteration methods},
-	author={Polyak, B. T.},
-	journal={USSR Computational Mathematics and Mathematical Physics},
-	volume={4},
-	number={5},
-	pages={1--17},
-	year={1964},
-	publisher={Elsevier}
-}
-@article{taylor2018exact,
-	title={Exact worst-case convergence rates of the proximal gradient method for composite convex minimization},
-	author={Taylor, A. B. and Hendrickx, J. M. and Glineur, F.},
-	journal={Journal of Optimization Theory and Applications},
-	volume={178},
-	number={2},
-	pages={455--476},
-	year={2018},
-	publisher={Springer}
-}
+
 
 @inproceedings{cyrus2018robust,
 	title={A robust accelerated optimization algorithm for strongly convex functions},
@@ -607,16 +637,7 @@ publisher={Springer}
 	year={2018},
 	school={Universitats-und Landesbibliothek der Heinrich-Heine-Universitat Dusseldorf}
 }
-@article{frank1956algorithm,
-	title={An algorithm for quadratic programming},
-	author={Frank, M. and Wolfe, P.},
-	journal={Naval research logistics quarterly},
-	volume={3},
-	number={1-2},
-	pages={95--110},
-	year={1956},
-	publisher={Wiley Online Library}
-}
+
 @article{drori2017exact,
 	title={The exact information-based complexity of smooth convex minimization},
 	author={Drori, Y.},
