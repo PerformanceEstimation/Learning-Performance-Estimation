@@ -417,7 +417,7 @@ The goal of the following exercise is to link what we have seen so far with ``cl
 	
 	Does it match the numerical values obtained using the previous codes for computing $\tau(\mu,L,\gamma_k)$ numerically?
 	
-	\correction{The expression is $\tau(\mu,L,\gamma_k)=\max\{(1-\gamma_k L)^2,(1-\gamma_k\mu)^2\}$. Because the problem has a linear objective, $\tau$ must such that the solution is on the boundary of the PSD cone. That is, one can find an expression of $\tau$ as a function of the other variables and parameters by solving $\det(S)=0$. There are then two possibilities:
+	\correction{The expression is $\tau(\mu,L,\gamma_k)=\max\{(1-\gamma_k L)^2,(1-\gamma_k\mu)^2\}$. Because the problem has a linear objective, $\tau$ must be such that the solution is on the boundary of the PSD cone. That is, one can find an expression of $\tau$ as a function of the other variables and parameters by solving $\det(S)=0$. There are then two possibilities:
 	\begin{enumerate}
 	\item either the other eigenvalue of $S$ is zero (but one can observe, numerically, that the rank of $S$ is empirically equal to $1$ for non-optimal stepsizes)
 	\item or $\lambda_1$ can be chosen for minimizing the expression of $\tau$.
@@ -696,7 +696,7 @@ After appropriate substitutions of $g_\star$, $x_{k+1}$, and $\tau(\mu,L,\gamma_
 	A differentiable convex function $f:\mathbb{R}^d\rightarrow \mathbb{R}$ is $L$-smooth (with $L\in [0,\infty)$) if it satisfies $\forall x,y\in\mathbb{R}^d$: $\|\nabla f(x)-\nabla f(y)\|\leqslant L \|x-y\|$.
 	\end{definition}
 	\begin{definition}\label{def:smoothstronglyconvex}
-	A differentiable function $f:\mathbb{R}^d\rightarrow \mathbb{R}$ is $L$-smooth and $\mu$-strongly convex (with $0\leqslant \mu<L<\infty$) if it satisfies $\forall x,y\in\mathbb{R}^d$: $\|\nabla f(x)-\nabla f(y)\|\leqslant L \|x-y\|$ and $\|\nabla f(x)-\nabla f(y)\|\geqslant \mu \|x-y\|$.
+	A differentiable function $f:\mathbb{R}^d\rightarrow \mathbb{R}$ is $L$-smooth and $\mu$-strongly convex (with $0\leqslant \mu<L<\infty$) if it satisfies $\forall x,y\in\mathbb{R}^d$: $\|\nabla f(x)-\nabla f(y)\|\leqslant L \|x-y\|$ and $f(x) \geqslant f(y) + \left< \nabla f(y), x - y \right> + \frac{\mu}{2} \|x-y\|^2$.
 	\end{definition}
 	\begin{definition}\label{def:indicator}
 	Let $Q\subseteq \mathbb{R}^d$ be a non-empty closed convex set. The convex indicator function for $Q$ is defined as 
