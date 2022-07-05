@@ -94,7 +94,8 @@ So, our goal is to assess the quality of $x_k$ by providing hopefully meaningful
 
 \paragraph{Notations.} We denote by $\inner{\cdot}{\cdot}:\mathbb{R}^d\times \mathbb{R}^d\rightarrow\mathbb{R} $ the standard Euclidean inner product, and by $\|\cdot \|^2:\mathbb{R}^d\rightarrow\mathbb{R}$ the standard Euclidean norm, that is, the induced norm: for any $x\in\mathbb{R}^d$: $\|x\|^2=\inner{x}{x}$. Other notations are defined throughout the text.
 
-\paragraph{Packages}... pesto/pepit, modelling yalmip cvx... solvers mosek et co... symbolique sympy
+\paragraph{Packages} The numerical parts of the exercises were mostly done for using Python (or alternatively Matlab), but the reader can use other languages if he is proficient with semidefinite programming with it (although there is currently no interface for easing the access to performance estimation beyond Python and Matlab). A few exercises were designed for using the \pepit package~\cite{goujaud2022pepit} (alternatively, for Matlab,~\pesto\cite{pesto2017}). For users planning to keep using performance estimation, we advise to install a good SDP solver such as MOSEK~\cite{mosek2010}. In any case, the Python package relies on CVXPY~\cite{diamond2016cvxpy} (see \href{https://github.com/PerformanceEstimation/PEPit}{\pepit installation}) and the Matlab one relies on YALMIP~\cite{Yalmip2004} (see \href{https://github.com/PerformanceEstimation/Performance-Estimation-Toolbox/wiki/Toolbox-(and-dependencies)-installation}{\pesto installation}). Some exercises might be simpler to approach using some symbolic computations, such as Sympy~\cite{meurer2017sympy}. 
+
 	%==================================
 	%								%||
 	\section{Getting familiar with base performance estimation problems}	\label{s:pep_basis}	%||
@@ -320,7 +321,9 @@ with the same optimal value. Obviously, any feasible point to the last problem i
 			\end{align*}
 	along with $N(N+1)$ interpolation inequalities (two inequalities per pair of points in the discrete representation).}
 	
-	\item Using previous points: assume you computed an optimal solution to the SDP formulation for the ratio $\frac{\|x_{N}-x_\star\|^2}{\|x_0-x_\star\|^2}$ what is the link between the rank of the Gram matrix and the dimension $d$ in which this counter-example lives? How can you compute this $d$?
+	\item Using previous points: assume you computed an optimal solution to the SDP formulation for the ratio $\frac{\|x_{N}-x_\star\|^2}{\|x_0-x_\star\|^2}$ what is the link between the rank of the Gram matrix $G$ and the dimension $d$ in which this counter-example lives? 
+	
+	\correction{The dimension of the counter-example corresponds to $\mathrm{rank}(G)$.}
 	
 	\item For obtaining ``low-dimensional'' worst-case instances, it is often useful to use heuristics. One of them is known as the ``trace heuristic'', which consists in solving a second optimization problem, whose solution hopefully forces $G$ to have a lower rank. For~\eqref{ex1:eq:SDP_grad2}, it consists in solving
 	\begin{equation}\label{ex1:eq:trace}
@@ -335,13 +338,15 @@ with the same optimal value. Obviously, any feasible point to the last problem i
 	\end{equation}
 	for which one first needs to obtain a precise approximation of $\tau(\mu,L,\gamma_k)$. 
 	
-	The trace heuristic is already implemented within \pepit and \pesto; see this \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Exercises - codes/Jupyter/Exercise1.ipynb}{\pepit code} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Exercises - codes/Matlab/Exercise1_dimReduction.m}{\pesto code}). Can you plot the resulting worst-case function(s) for a few different values of $N$ (e.g., $N=1,2,5,10$) with $\gamma_k=\tfrac{1}{L}$. Does it correspond to a simple function? (Hint: compare the outputs with the functions $\tfrac{L}{2}x^2$ and $\tfrac{\mu}{2}x^2$). What worst-case ratio $\frac{\|x_{N}-x_\star\|^2}{\|x_0-x_\star\|^2}$ do you observe when $\mu=0$?
+	The trace heuristic is already implemented within \pepit and \pesto; see this \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Exercises - codes/Jupyter/Exercise1.ipynb}{\pepit code} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Exercises - codes/Matlab/Exercise1_dimReduction.m}{\pesto code}). Can you plot the resulting worst-case function(s) for a few different values of $N$ (e.g., $N=1,2,5,10$) with $\gamma_k=\tfrac{1}{L}$. Does it correspond to a simple function? (Hint: two extremely simple examples of $L$-smooth $\mu$-strongly convex functions are $\tfrac{\mu}{2}x^2$ and $\tfrac{L}{2}x^2$). Can you use this conclusion for ``guessing'' an expression for $\tau(\mu,L,1/L)$ based on the behavior of gradient descent on the worst-case function that you identified?
 	
-	\correction{Experiments should lead to the observation that $\tfrac{\mu}{2}x^2$ is a low-dimensional worst-case function for all $N$ (for the particular choice of stepsize $1/L$).}
+	\correction{Experiments should lead to the observation that $\tfrac{\mu}{2}x^2$ is a low-dimensional worst-case function for all $N$ (for the particular choice of stepsize $1/L$).
+	
+	If the worst-case behavior is achieved (among others) on this function, the convergence rate is given by $\tau(\mu,L,1/L)=(1-\mu/L)^2$, since $x_{k+1}-x_\star=x_k-\gamma_k \nabla f(x_k)-x_\star=(1-\mu\gamma_k)(x_0-x_\star)$ on this simple quadratic function.}
 
-	\item Set $\gamma_k=\tfrac{1}{L}$ and $\mu=0$. A classical way to avoid the pathological behavior of the previous example (in the analyses) is to study different types of ratios. Modify your code for studying the ratio $\frac{f(x_N)-f_\star}{\|x_0-x_\star\|^2}$. Can you guess the dependence of the worst-case ratio on $N$ based on a few numerical trials? and the dependence on $L$?
+	\item Set $\gamma_k=\tfrac{1}{L}$ and $\mu=0$. What worst-case ratio $\frac{\|x_{N}-x_\star\|^2}{\|x_0-x_\star\|^2}$ do you observe numerically? A classical way to avoid such a pathological behavior  (in the analyses) is to study different types of ratios. Modify your code for studying the ratio $\frac{f(x_N)-f_\star}{\|x_0-x_\star\|^2}$. Can you guess the dependence of the worst-case ratio on $N$ based on a few numerical trials? and the dependence on $L$?
 	
-	\correction{The worst-case ratio should match exactly $\frac{L}{4N+2}$.}
+	\correction{The worst-case ratio $\frac{\|x_{N}-x_\star\|^2}{\|x_0-x_\star\|^2}$ is equal to $1$ (i.e., no guaranteed convergence); the worst-case ratio $\frac{f(x_N)-f_\star}{\|x_0-x_\star\|^2}$ should match exactly $\frac{L}{4N+2}$.}
 	
 	
 	\item Same question with $\gamma_k=\tfrac{1}{L}$, $\mu=0$, and the ratio $\frac{\|\nabla f(x_N)\|^2}{\|x_0-x_\star\|^2}$.
@@ -404,17 +409,29 @@ The goal of the following exercise is to link what we have seen so far with ``cl
 	
 	\correction{As $\tau(\mu,L,\gamma_k)$ corresponds to the feasible point with the smallest value of $\tau$, all feasible points to the dual problem are upper bounds on $\tau(\mu,L,\gamma_k)$. That is, any feasible point $(\tau,\lambda_1,\lambda_2)$ satisfy to $\tau(\mu,L,\gamma_k)\leqslant \tau$.}
 	
-	\item Is there a simple closed-form expression for $\tau(\mu,L,\gamma_k)$? Hint \#1: can we solve~\eqref{eq:ex1_dual} in closed-form? Hint \#2: the objective is linear in $\tau$; the optimal solution (if it exists) is therefore necessarily on the boundary of the PSD cone; hence $\tau$ must be such that at least one eigenvalue of $S$ is zero.
+	\item Solve~\eqref{eq:ex1_dual} numerically. Do those values match those obtained in the first exercise? 
+	
+	For doing that, you can complete the following \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Exercises - codes/Jupyter/Exercise2.ipynb}{Python code} (alternative: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Exercises - codes/Matlab/Exercise2.m}{Matlab code}).
+
+	\item Is there a simple closed-form expression for $\tau(\mu,L,\gamma_k)$? You can complete the same notebook as in the previous exercise (alternative: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Exercises - codes/Matlab/Exercise2_closedform.m}{Matlab code}).
 	
 	Does it match the numerical values obtained using the previous codes for computing $\tau(\mu,L,\gamma_k)$ numerically?
 	
 	\correction{The expression is $\tau(\mu,L,\gamma_k)=\max\{(1-\gamma_k L)^2,(1-\gamma_k\mu)^2\}$. Because the problem has a linear objective, $\tau$ must such that the solution is on the boundary of the PSD cone. That is, one can find an expression of $\tau$ as a function of the other variables and parameters by solving $\det(S)=0$. There are then two possibilities:
 	\begin{enumerate}
 	\item either the other eigenvalue of $S$ is zero (but one can observe, numerically, that the rank of $S$ is empirically equal to $1$ for non-optimal stepsizes)
-	\item either $\lambda_1$ can be chosen for minimizing the expression of $\tau$.
-	\end{enumerate} this can be done using sympy (++ notebook dans enonce!).}
+	\item or $\lambda_1$ can be chosen for minimizing the expression of $\tau$.
+	\end{enumerate}}
 	
 	\item Consider $\gamma_k=\frac{1}{L}$ for simplicity. Given the optimal value of the multipliers $\tau,\lambda_1,\lambda_2$ in~\eqref{eq:ex1_dual}, can you write a ``direct'' proof for the linear convergence in terms of distance to an optimal point without resorting on any SDP formulation?
+	
+	\correction{ Sum the following inequalities with their corresponding weights: $$\begin{array}{r}     f_\star \geqslant      f_k+\langle{g_k};{x_\star-x_k}\rangle+\frac{1}{2L}\lVert{g_k-g_\star}\rVert^2+\frac{\mu}{2(1-\mu/L)}\lVert{x_k-x_\star-\frac{{1}}{L}(g_k-g_\star)}\rVert^2  :\lambda_1,  \\     f_k \geqslant      f_\star+\langle{g_\star};{x_k-x_\star}\rangle+\frac{1}{2L}\lVert{g_k-g_\star}\rVert^2+\frac{\mu}{2(1-\mu/L)}\lVert{x_k-x_\star-\frac{{1}}{L}(g_k-g_\star)}\rVert^2:\lambda_2.     \end{array}$$ We use the following values for the multipliers: $\lambda_1=\lambda_2=2\gamma_k\tau(\mu,L,\gamma_k) \geqslant      0$
+After appropriate substitutions of $g_\star$, $x_{k+1}$, and $\tau(\mu,L,\gamma_k)$, using respectively $g_\star=0$, $x_{k+1}=x_k-\gamma g_k$ and $\tau(\mu,L,\gamma_k)=(1-\gamma_k\mu)$, and with little effort, one can check that the previous weighted sum of inequalities can be written in the form: $$ \begin{array}{rl}    \lVert{x_{k+1}-x_\star}\rVert^2  \leqslant      & \left(1-\gamma_k \mu \right)^2\lVert{x_{k}-x_\star}\rVert^2 -\frac{\gamma_k(2-\gamma_k (L+\mu))}{L-\mu} \lVert{\mu {(x_k  -x_\star)} - g_k}\rVert^2. \end{array}$$ This statement can be checked simply by expanding both expressions (i.e., the weighted sum and its reformulation) and verifying that all terms indeed match.	
+	}
+	
+	
+	
+	
 	
 	\item A corresponding dual problem for the worst-case ratio $\frac{\|\nabla f(x_{k+1})\|^2}{\|\nabla f(x_k)\|^2}$ given by
 	\begin{equation}\label{eq:ex1_dual2}	 
@@ -428,6 +445,8 @@ The goal of the following exercise is to link what we have seen so far with ``cl
 		\end{aligned}
 		\end{equation} Is there a simple closed-form solution for this problem? Alternatively: solve this problem numerically and try to guess a solution.
 		
+	\correction{The answer for the convergence rate is the same as that for the previous ratio in terms of distances, but the multiplier are different. The interested reader can modify the previous codes for obtaining the corresponding expressions.}
+	
 	\item Using the following primal-dual pairing
 	{\scriptsize\begin{equation*}
 	\begin{aligned}
@@ -455,6 +474,8 @@ The goal of the following exercise is to link what we have seen so far with ``cl
 	\end{equation}}where ``$*$'' denotes symmetrical elements in the PSD matrix. Is there a simple closed-form solution for this problem? Note that this SDP is already coded \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Exercises - codes/Jupyter/Exercise1.ipynb}{here} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Exercises - codes/Matlab/Exercise1_SDP_functionvalues.m}{here})
 	
 	Hint \#1: solve the problem numerically and plot some values for the multipliers; hint \#2: pick $\lambda_1=\lambda_3=\lambda_6=0$; does the problem simplify?
+	
+	\correction{ Two difficulties here: (i) the LMI is larger, and (ii) contrary to the previous cases, the solution is not unique, which makes it complicated for the symbolic solvers. A simple approach for overcoming this is to ``clean'' the problem by hand, e.g., by removing unnecessary multipliers manually.}
 	\end{enumerate}
 	\end{exercise}
 	
