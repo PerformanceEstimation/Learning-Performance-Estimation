@@ -559,24 +559,75 @@ After appropriate substitutions of $g_\star$, $x_{k+1}$, and $\tau(\mu,L,\gamma_
 	\item Write a \pepit or \pesto code and guess the dependence on the iteration counter $N$ of the worst-case $f(x_N)-f_\star$ for each of those methods. What are the dependences on $D$ and $L$?
 	\end{enumerate}
 	\end{exercise}	
-
+	
+\begin{exercise}[Proximal point method for monotone inclusions]\label{ex:ppm2}
+	For this exercise, we consider the problem of solving a monotone inclusion problem:
+	\[ \text{find } x\in\mathbb{R}^d \text{ such that } 0\in M(x),\]
+	where $M:\mathbb{R}^d\rightrightarrows {\mathbb{R}^d}$ (point to set mapping) is a (maximal) mononotone operator (see \Cref{def:monotone}). In this context, the proximal point method consists in iterating
+	\[ x_{k+1}=\mathrm{prox}_{\alpha M}(x_k)=(I+\alpha M)^{-1} x_k,\]
+(where $I$ is the identity operator) or equivalently 
+	\[ x_{k+1}=x_k-\alpha M(x_{k+1}).\]
+	\begin{enumerate}
+	\item Consider the ratio $\frac{\|x_{N}-x_{N+1}\|^2}{\|x_0-x_\star\|^2}$, where $x_\star$ is such that $0\in M(x_\star)$. Can you compute this worst-case ratio using an SDP?
+	\item Write a \pepit or \pesto code for studying this ratio as a function of $N$ and $\alpha$.
+	\item Using dimension reduction, there should exist a low-dimensional worst-case example. Find it and plot it.
+	
+	More information about the worst-case guarantee and a low-dimensional worst-case example can be found in~\cite{gu2020tight} (see \href{https://arxiv.org/pdf/1904.05495.pdf}{arXiv}). Are your observations compatible with the fact that $M$ might encode a rotation matrix?
+	\end{enumerate}
+	\end{exercise}
 	
 
+	
+	\begin{exercise}[Fixed-point iterations]\label{ex:halpern}
+For this exercise, we consider the fixed point problem
+	\[ \text{find } x\in\mathbb{R}^d \text{ such that } x=F(x), \]
+	where $F:\mathbb{R}^d\rightarrow \mathbb{R}^d$ is a nonexpansive mapping (i.e., it is $1$-Lipschitz; that is, for all $x,y\in\mathbb{R}^d$, $\|F(x)-F(y)\|\leqslant \|x-y\|$).
+	\begin{enumerate}
+	\item The Halpern iteration is given by
+	\[ x_{k+1} = \left(1-\frac{1}{k+2}\right)F(x_k) + \frac{1}{k+2} x_0\]
+	Can you write SDP formulations for studying the ratio $\frac{\|x_{N}-F(x_N)\|^2}{\|x_0-x_\star\|^2}$ (for some $x_\star=F(x_\star)$)?
+	\item Can you find low-dimensional worst-case examples for this method? (Hint: use the logdet heuristic (implemented within \pepit and described in~\cite{fazel2003log} (see \href{https://web.stanford.edu/~boyd/papers/pdf/rank_min_heur_hankel.pdf}{pdf}))
+	\item Can you guess the dependence in $N$ of the worst-case behavior of the previous ratio?
+	\item An alternative is the so-called Krasnolselskii-Mann iteration, which can be instantiated as
+	\[ x_{k+1} = \left(1-\frac{1}{k+2}\right)F(x_k) + \frac{1}{k+2} x_k\]
+	How does it compare, it terms of worst-case behaviors, to Halpern?
+	\end{enumerate}
+	\end{exercise}
+	
+	
+%	\begin{exercise}[Proximal gradient method]\label{ex:pgm}
+%	Show that the smallest $\tau$ such that the inequality
+%	\[ ... \]
+%	\begin{enumerate}
+%	\item show that it can be formulated as ...
+%	\item show that the previous problem can be framed using a discrete version...
+%	\item show that it is equivalent to the SDP XXXX
+%	\item numerical trials
+%	\end{enumerate}
+%	\end{exercise}
+%
+%	\begin{exercise}[Douglas-Rachford splitting]\label{ex:drs}
+%	DRS+Accel DRS?
+%	
+%	Show that the smallest $\tau$ such that the inequality
+%	\[ ... \]
+%	\begin{enumerate}
+%	\item show that it can be formulated as ...
+%	\item show that the previous problem can be framed using a discrete version...
+%	\item show that it is equivalent to the SDP XXXX
+%	\item numerical trials
+%	\end{enumerate}
+%	\end{exercise}	
+%	
+	
+	
+	
+
+	
+\paragraph{Credits} examples due to XXX
 		
 %% TO BE ADDED LATER
 %%
-%%	\begin{exercise}[Fixed-point iterations]\label{ex:halpern}
-%%	Show that the smallest $\tau$ such that the inequality
-%%	\[ ... \]
-%%	\begin{enumerate}
-%%	\item two methods: Halpern and Kras...
-%%	\item show that it can be formulated as ...
-%%	\item show that the previous problem can be framed using a discrete version...
-%%	\item show that it is equivalent to the SDP XXXX
-%%	\item using duality show that ... (dual SDP)
-%%	\item numerical trials
-%%	\end{enumerate}
-%%	\end{exercise}
 %%\begin{exercise}[Subgradient method]\label{ex:subgradient}
 %%	Show that the smallest $\tau$ such that the inequality
 %%	\[ ... \]
@@ -584,17 +635,6 @@ After appropriate substitutions of $g_\star$, $x_{k+1}$, and $\tau(\mu,L,\gamma_
 %%	\item show that it can be formulated as ...
 %%	\item show that the previous problem can be framed using a discrete version...
 %%	\item numerical trials (code: XXX). Ex: modify the code to compute worst gradient norm, and worst best gradient norm among iterates
-%%	\end{enumerate}
-%%	\end{exercise}
-%%	
-%%	\begin{exercise}[Proximal point method for monotone inclusions]\label{ex:ppm2}
-%%	Show that the smallest $\tau$ such that the inequality
-%%	\[ ... \]
-%%	\begin{enumerate}
-%%	\item show that it can be formulated as ...
-%%	\item show that the previous problem can be framed using a discrete version...
-%%	\item show that it is equivalent to the SDP XXXX
-%%	\item numerical trials
 %%	\end{enumerate}
 %%	\end{exercise}
 %%	
@@ -644,18 +684,6 @@ After appropriate substitutions of $g_\star$, $x_{k+1}$, and $\tau(\mu,L,\gamma_
 %%	\end{exercise}	
 %%	
 %%	
-%%	
-%%	\begin{exercise}[Douglas-Rachford splitting]\label{ex:drs}
-%%	Show that the smallest $\tau$ such that the inequality
-%%	\[ ... \]
-%%	\begin{enumerate}
-%%	\item show that it can be formulated as ...
-%%	\item show that the previous problem can be framed using a discrete version...
-%%	\item show that it is equivalent to the SDP XXXX
-%%	\item numerical trials
-%%	\end{enumerate}
-%%	\end{exercise}
-%%	
 %%	%==================================
 %%	%								%||
 %%	\section{Advanced performance estimation techniques}\label{s:adv}		%||
@@ -700,6 +728,15 @@ After appropriate substitutions of $g_\star$, $x_{k+1}$, and $\tau(\mu,L,\gamma_
 	Let $Q\subseteq \mathbb{R}^d$ be a non-empty closed convex set. The convex indicator function for $Q$ is defined as 
 	\[ i_Q(x) \triangleq \left\{\begin{array}{ll}0 &\text{ if }x\in Q,\\+\infty &\text{ otherwise.}\end{array}\right. \]
 	\end{definition}
+	\begin{definition}\label{def:monotone}
+	A point to set operator $M$ (notation: $M:\mathbb{R}^d\rightrightarrows\mathbb{R}^d$) is monotone if for all $x,y\in\mathbb{R}^d$ and all $m_x\in M(x)$, $m_y\in M(y)$ it holds that
+	\[ \inner{ x-y}{m_x-m_y}\geqslant 0.\]
+In addition, $M$ is maximal if there is no monotone operator $M'$ such that for all $x$: $M(x)\subset M'(x)$.
+	\end{definition}
+	\begin{definition}\label{def:Lipschitz}
+	A mapping $F:\mathbb{R}^d\rightarrow\mathbb{R}^d$ is $L$-Lipschitz if for all $x,y\in\mathbb{R}^d$ 
+	\[ \|F(x)-F(y)\|\leqslant L\|x-y\|.\]
+	\end{definition}
 	
 	\subsection{Interpolation/extension theorems}
 	This section gathers useful elements allowing to answer certain questions.
@@ -723,11 +760,29 @@ f_i\geqslant f_j+&\langle g_j;x_i-x_j\rangle+\frac{1}{2L}\|g_i-g_j\|^2+\frac{\mu
 holds for all $i,j\in I$.
 \end{theorem}
 
-\begin{theorem}[indicator-interpolation]\label{thm:interp_indicator} Let $I$ be an index set and $S=\{(x_i,s_i)\}_{i\in I}\subseteq \mathbb{R}^d\times\mathbb{R}^d\times \mathbb{R}$ be a set of triplets. There exists a (closed proper convex) indicator function (for a non-empty closed domain $Q\subseteq\mathbb{R}^d$ of diameter $D$) satisfying  $s_i\in\partial i_Q(x_i)$ for all $i\in I$ if and only if
+\begin{theorem}[Indicator-interpolation]\label{thm:interp_indicator} Let $I$ be an index set and $S=\{(x_i,s_i)\}_{i\in I}\subseteq \mathbb{R}^d\times\mathbb{R}^d$ be a set of pairs. There exists a (closed proper convex) indicator function $i_Q:\mathbb{R}^d\rightarrow\mathbb{R}\cup\{\infty\}$ (for a non-empty closed domain $Q\subseteq\mathbb{R}^d$ of diameter $D$) satisfying  $s_i\in\partial i_Q(x_i)$ for all $i\in I$ if and only if
 \begin{equation*}
 \begin{aligned}
 \langle s_j;x_i-x_j\rangle&\leqslant 0\\
  \|x_i-x_j\|^2 &\leqslant D^2,
+\end{aligned}
+\end{equation*}
+holds for all $i,j\in I$.
+\end{theorem}
+
+\begin{theorem}[Monotone-interpolation]\label{thm:monotone_interpolation} Let $I$ be an index set and $S=\{(x_i,s_i)\}_{i\in I}\subseteq \mathbb{R}^d\times\mathbb{R}^d$ be a set of pairs. There exists a maximal monotone operator $M:\mathbb{R}^d\rightrightarrows\mathbb{R}^d$ satisfying $s_i\in M(x_i)$ for all $i\in I$ if and only if
+\begin{equation*}
+\begin{aligned}
+\langle s_j-s_i;x_j-x_i\rangle&\geqslant 0
+\end{aligned}
+\end{equation*}
+holds for all $i,j\in I$.
+\end{theorem}
+
+\begin{theorem}[Lipschitz-interpolation]\label{thm:Lipschitz_interpolation} Let $I$ be an index set and $S=\{(x_i,s_i)\}_{i\in I}\subseteq \mathbb{R}^d\times\mathbb{R}^d$ be a set of pairs. There exists an $L$-Lipschitz mapping $F:\mathbb{R}^d\rightarrow\mathbb{R}^d$ satisfying $s_i= F(x_i)$ for all $i\in I$ if and only if
+\begin{equation*}
+\begin{aligned}
+\|s_i-s_j\|^2\leqslant L^2 \|x_i-x_j\|^2
 \end{aligned}
 \end{equation*}
 holds for all $i,j\in I$.
