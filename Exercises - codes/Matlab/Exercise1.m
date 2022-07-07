@@ -28,11 +28,12 @@ g0 = f.gradient(x0);
 x1 = x0 - gamma * g0;
 
 % COMPLETE the following lines
-P.InitialCondition( );          % Initial condition ||x0-xs||^2<= 1
-P.PerformanceMetric( );         % Performance metric ||x1-xs||^2
+P.InitialCondition( g0^2 <= 1 );    
+g1 = f.gradient(x1);
+P.PerformanceMetric( g1^2 );         % Performance metric ||x1-xs||^2
 
 % (5) Solve the PEP
 P.solve()
 
 % (6) Evaluate the output
-double((x1-xs)^2)   % worst-case distance
+double(g1)   % worst-case distance
