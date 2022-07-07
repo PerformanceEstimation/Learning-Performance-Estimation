@@ -590,21 +590,20 @@ For this exercise, we consider the fixed point problem
 	\item Can you guess the dependence in $N$ of the worst-case behavior of the previous ratio?
 	\item An alternative is the so-called Krasnolselskii-Mann iteration, which can be instantiated as
 	\[ x_{k+1} = \left(1-\frac{1}{k+2}\right)F(x_k) + \frac{1}{k+2} x_k\]
-	How does it compare, it terms of worst-case behaviors, to Halpern?
+	How does it compare to Halpern in terms of worst-case ratios?
 	\end{enumerate}
 	\end{exercise}
 	
 	
-%	\begin{exercise}[Proximal gradient method]\label{ex:pgm}
-%	Show that the smallest $\tau$ such that the inequality
-%	\[ ... \]
-%	\begin{enumerate}
-%	\item show that it can be formulated as ...
-%	\item show that the previous problem can be framed using a discrete version...
-%	\item show that it is equivalent to the SDP XXXX
-%	\item numerical trials
-%	\end{enumerate}
-%	\end{exercise}
+	\begin{exercise}[Proximal gradient method]\label{ex:pgm} We consider the composite convex minimization problem of the form
+	\[ \min_{x\in\mathbb{R}^d} f(x)+h(x),\]
+where $f$ is $L$-smooth and $\mu$-strongly convex and $h$ is ccp (closed, convex, proper) so that its proximal operation is well-defined. We want to use the proximal gradient method
+\[ x_{k+1}=\argmin_{x\in\mathbb{R}^d}\{h(x)+\inner{\nabla f(x_k)}{x-x_k}+\tfrac{L}{2}\|x-x_k\|^2\}\]
+for solving the problem.
+	\begin{enumerate}
+	\item Can we formulate the problem of computing the worst-case ratio $\frac{\|x_{k+1}-x_\star\|^2}{\|x_k-x_\star\|^2}$ as an SDP; how do you arrive to such a formulation? Write a code for computing it, and compare the numerical values with those of Exercise 1.
+	\end{enumerate}
+	\end{exercise}
 %
 %	\begin{exercise}[Douglas-Rachford splitting]\label{ex:drs}
 %	DRS+Accel DRS?
@@ -624,7 +623,7 @@ For this exercise, we consider the fixed point problem
 	
 
 	
-\paragraph{Credits} examples due to XXX
+\paragraph{Credits} Detailed results for Exercise 2 (closed-form worst-case convergence rates for gradient descent in different performance measures) can be found in~\cite{taylor2015exact}; the closed-form worst-case analysis of the proximal minimization algorithm can be found in~\cite{taylor2018exact}; the worst-case analysis for the proximal point method in the context of monotone inclusions can be found in~\cite{gu2020tight}; and the analyses from Exercise 7 can be found in~\cite{lieder2017convergence}
 		
 %% TO BE ADDED LATER
 %%
@@ -722,7 +721,7 @@ For this exercise, we consider the fixed point problem
 	A differentiable convex function $f:\mathbb{R}^d\rightarrow \mathbb{R}$ is $L$-smooth (with $L\in [0,\infty)$) if it satisfies $\forall x,y\in\mathbb{R}^d$: $\|\nabla f(x)-\nabla f(y)\|\leqslant L \|x-y\|$.
 	\end{definition}
 	\begin{definition}\label{def:smoothstronglyconvex}
-	A differentiable function $f:\mathbb{R}^d\rightarrow \mathbb{R}$ is $L$-smooth and $\mu$-strongly convex (with $0\leqslant \mu<L<\infty$) if it satisfies $\forall x,y\in\mathbb{R}^d$: $\|\nabla f(x)-\nabla f(y)\|\leqslant L \|x-y\|$ and $f(x) \geqslant f(y) + \left< \nabla f(y), x - y \right> + \frac{\mu}{2} \|x-y\|^2$.
+	A convex differentiable function $f:\mathbb{R}^d\rightarrow \mathbb{R}$ is $L$-smooth and $\mu$-strongly convex ($0\leqslant \mu<L<\infty$) if it satisfies $\forall x,y\in\mathbb{R}^d$: $\|\nabla f(x)-\nabla f(y)\|\leqslant L \|x-y\|$ and $\|\nabla f(x)-\nabla f(y)\|\geqslant \mu \|x-y\|$.
 	\end{definition}
 	\begin{definition}\label{def:indicator}
 	Let $Q\subseteq \mathbb{R}^d$ be a non-empty closed convex set. The convex indicator function for $Q$ is defined as 
@@ -739,7 +738,7 @@ In addition, $M$ is maximal if there is no monotone operator $M'$ such that for 
 	\end{definition}
 	
 	\subsection{Interpolation/extension theorems}
-	This section gathers useful elements allowing to answer certain questions.
+	This section gathers useful elements allowing to answer certain questions. Those results (or references to them) can be found in, e.g.,~\cite{taylor2015exact,ryu2016primer}.
 
 
 	\begin{theorem}Let $I$ be an index set and $S=\{(x_i,g_i,f_i)\}_{i\in I}\subseteq \mathbb{R}^d\times\mathbb{R}^d\times \mathbb{R}$ be a set of triplets. There exists $f\in\mathcal{F}_{0,\infty}$ (a closed, proper and convex function) satisfying $f(x_i)=f_i$ and $g_i\in\partial f(x_i)$ for all $i\in I$ if and only if
