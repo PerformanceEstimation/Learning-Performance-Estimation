@@ -1,0 +1,1072 @@
+\documentclass[11pt,a4paper]{article}
+\def\includeCorrections{1} % set to 1 to incorporate correction
+
+%%%%% packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{hyperref}
+\usepackage{bibentry}
+\nobibliography*
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{fixltx2e}
+%\usepackage[framed]{mcode}
+%\usepackage{url,textcomp}
+
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\usepackage{enumerate}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{comment}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{pdfsync}
+%\usepackage[svgnames]{xcolor}
+\usepackage[tikz]{bclogo}
+\usepackage{pifont}
+
+\hypersetup{
+	colorlinks   = true, %Colours links instead of ugly boxes
+	urlcolor     = red, %Colour for external hyperlinks
+	linkcolor    = red, %Colour of internal links
+	citecolor   = red %Colour of citations
+}
+\usepackage{cleveref}
+
+%% DEFINITIONS/COMMENTS
+\renewcommand{\headrulewidth}{1pt}
+\newcommand{\norm}[1]{{\left\lVert#1\right\rVert}}
+\newcommand{\normsq}[1]{{\left\lVert#1\right\rVert}^2}
+\newcommand{\Tr}[1]{{\trace\left(#1\right)}}
+\newcommand{\Rd}{\mathbb{R}^d}
+\newcommand{\inner}[2]{{\langle #1, #2\rangle}}
+\DeclareMathOperator{\linspan}{span}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator{\rank}{rank}
+
+\fancyhead[L]{}
+\fancyhead[R]{}
+
+\fancyfoot[C]{\textbf{page \thepage}}
+
+\newcommand{\caution}[1]{{\color{red}{\sc Caution:} #1}}
+\newcommand{\pesto}{{PESTO }}
+\newcommand{\pepit}{{PEPit }}
+\if\includeCorrections 1
+\newcommand{\correction}[1]{{{\color{blue}\underline{Correction:} #1}}}
+\else
+\newcommand{\correction}[1]{}
+\fi
+
+
+\newtheorem{exercise}{Exercise}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+
+\begin{document}
+	\author{Adrien Taylor\footnote{INRIA, SIERRA project-team, and D.I. Ecole normale sup\'erieure, Paris, France. Email: adrien.taylor@inria.fr}, Baptiste Goujaud\footnote{CMAP, École Polytechnique, Institut Polytechnique de Paris, France. Email: baptiste.goujaud@gmail.com}}
+	
+	\title{Worst-case analyses for first-order optimization methods}
+	\date{Current version: \today}
+	\maketitle
+	
+	\renewcommand*\contentsname{}
+	\setcounter{tocdepth}{2} \tableofcontents
+	
+
+
+	\section*{Foreword \& Acknowledgements}
+	This document provides a series of exercises for getting familiar with ``performance estimation problems'' and the use of semidefinite programming for analyzing worst-case behaviors of optimization methods. An informal introduction can be found in this \href{https://francisbach.com/computer-aided-analyses/}{blog post}. Exercises summarizing the main ingredients of the approach are provided in \Cref{s:pep_basis} (\Cref{ex1} focuses on the primal PEP formulation---i.e., on finding worst-case scenarios---, whereas \Cref{ex2} focuses on the dual formulation---i.e., on finding rigorous worst-case guarantees). \Cref{s:exo} contains exercises for going further. Background material that might be used for the exercises is provided in \Cref{sec:background}.
+	
+	Those notes were written for accompanying the \href{https://trade-opt-itn.eu/workshop.html}{TraDE-OPT workshop on algorithmic and continuous optimization}. If you have any comment, remark, or if you found a typo/mistake, please don't hesitate to feedback the authors!
+	
+	\paragraph*{Funding.} A. Taylor acknowledges support from the European Research Council (grant SEQUOIA 724063). This work was partly funded by the French government under management of Agence Nationale de la Recherche as part of the ``Investissements d’avenir'' program, reference ANR-19-P3IA-0001 (PRAIRIE 3IA Institute). The work of B. Goujaud is partially supported by ANR-19-CHIA-0002-01/chaire SCAI, and Hi!Paris. 
+	
+	\clearpage
+	%==================================
+	%								%||
+	\section{Introduction}			%||
+	%============================	%||
+	%==================================
+	
+	In short, considering problems of the form \[\min_{x\in\mathbb{R}^d} F(x),\] where we denote an optimal solution by $x_\star\in\argmin_{x\in\mathbb{R}^d} F(x)$, our goal here is to assess ``a priori'' the quality of the output of some ``black-box'' iterative algorithm, whose iterates are denoted by $x_0,x_1,\ldots,x_N$. There are typically different ways of doing so, which might or might not be relevent depending on the target applications of a particular optimization method. In first-order optimization, we often want to upper bound the quality of an iterate $x_k$ in one of the following terms (which we all ideally would like to be as small as possible, and decreasing functions of $k\in\mathbb{N}$): $\|x_k-x_\star\|^2$, $\|\nabla f(x_k)\|^2$, or $f(x_k)-f(x_\star)$. There are of course other possibilities, including combinations of them (see examples below).
+
+So, our goal is to assess the quality of $x_k$ by providing hopefully meaningfull upper bounds on at least one such quantity. For doing so, we consider classes of problems (i.e., sets of assumptions on $F$), and perform worst-case analyses (i.e., we want the bound to be valid for all $F$ satisfying the set of assumptions at hand). The following exercises try to shed a bit of light on this topic, by examplifying a principled approach to construct such worst-case convergence bounds using the so-called ``performance estimation framework'', introduced by Drori and Teboulle in~\cite{drori2014performance}. This document presents the performance estimation problem using the formalism from Taylor, Hendrickx, and Glineur~\cite{taylor2015exact,taylor2015smooth}.
+
+\paragraph{Notations.} We denote by $\inner{\cdot}{\cdot}:\mathbb{R}^d\times \mathbb{R}^d\rightarrow\mathbb{R} $ the standard Euclidean inner product, and by $\|\cdot \|^2:\mathbb{R}^d\rightarrow\mathbb{R}$ the standard Euclidean norm, that is, the induced norm: for any $x\in\mathbb{R}^d$: $\|x\|^2=\inner{x}{x}$ (the results and techniques below apply more broadly (see, e.g.,~\cite{taylor2015exact,Dragomir2019optimal}), but it is not needed for understanding the exercises below). Other notations are defined throughout the text.
+
+\paragraph{Packages} The numerical parts of the exercises were mostly done for using Python (or alternatively Matlab), but the reader can use other languages if he is proficient with semidefinite programming with it (although there is currently no interface for easing the access to performance estimation beyond Python and Matlab). A few exercises were designed for using the \pepit package~\cite{goujaud2022pepit} (alternatively, for Matlab,~\pesto\cite{pesto2017}). For users planning to keep using performance estimation, we advise to install a good SDP solver such as MOSEK~\cite{mosek2010}. In any case, the Python package relies on CVXPY~\cite{diamond2016cvxpy} (see \href{https://github.com/PerformanceEstimation/PEPit}{\pepit installation}) and the Matlab one relies on YALMIP~\cite{Yalmip2004} (see \href{https://github.com/PerformanceEstimation/Performance-Estimation-Toolbox/wiki/Toolbox-(and-dependencies)-installation}{\pesto installation}). Some exercises might be simpler to approach using some symbolic computations, such as Sympy~\cite{meurer2017sympy} (which is used in some of the Python notebooks). 
+
+{\color{blue}\paragraph{Getting corrected exercises?} Just recompile this latex file after setting the second line of the document to \verb?\def\includeCorrections{1}? (\verb?\def\includeCorrections{0}? to remove corrections).}
+
+	%==================================
+	%								%||
+	\section{Getting familiar with base performance estimation problems}	\label{s:pep_basis}	%||
+	%============================	%||
+	%==================================
+	In this section, we introduce the main base ingredients underlying the performance estimation technique. Those ingredients are all examplified for the analysis of gradient descent.
+	
+	The goal of this first exercise is to (i) get familiar with the concept of performance estimation problem, that is, how can we cast, and solve, the problem of looking for worst-case scenarios in the context of first-order optimization; and (ii) get an idea on the applicability of the methodology for standard settings.
+	
+
+	
+	\begin{exercise}[Gradient method---``primal performance estimation'']\label{ex1} For this exercise, consider the problem of ``black-box'' minimization of a smooth strongly convex function:
+	\begin{equation}\label{eq:ex1_prob}
+	f_\star \triangleq \min_{x\in\mathbb{R}^d} f(x),
+	\end{equation}
+	where $f$ is $L$-smooth and $\mu$-strongly convex (see \Cref{def:smoothstronglyconvex}), and where $x_\star\triangleq \argmin_{x} f(x)$ and $f_\star\triangleq f(x_\star)$ its optimal value. For minimizing~\eqref{eq:ex1_prob} we use gradient descent with a pre-determined sequence of stepsizes $\{\gamma_k\}_k$; that is, we iterate $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$.
+	The goal of this exercise is to compute $\tau(\mu,L,\gamma_k)$, a.k.a.\! a convergence rate, the smallest value such that the inequality
+	\begin{equation}\label{ex1:eq:distance}
+	 \|x_{k+1}-x_\star\|^2 \leqslant \tau(\mu,L,\gamma_k) \|x_k-x_\star\|^2
+	\end{equation}
+	is valid for any $d\in\mathbb{N}$, for any $L$-smooth $\mu$-strongly convex function $f$ (notation $f\in\mathcal{F}_{\mu,L}$) and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$, and any $x_\star\in\argmin_x f(x)$. 
+	\begin{enumerate}
+	\item Assuming $x_\star\neq x_k$ (without loss of generality), show that 
+	\begin{equation}\label{ex1:eq:base_pep1}
+	\begin{aligned}
+		\tau(\mu,L,\gamma_k)= \sup_{\substack{d,f\\x_k,x_{k+1},x_\star}} \ &\frac{\|x_{k+1}-x_\star\|^2}{\|x_k-x_\star\|^2}\\
+		\text{s.t. } & f\in\mathcal{F}_{\mu,L} \\
+		&x_{k+1}=x_k-\gamma_k  \nabla f(x_k)\\
+		&\nabla f(x_\star)=0,
+		\end{aligned}
+	\end{equation} where $f$, $x_k$, $x_{k+1}$, $x_\star$, and $d$ are the variables of the optimization problem.
+		
+	\correction{We trivially have~\eqref{ex1:eq:distance} $\Leftrightarrow \frac{\|x_{k+1}-x_\star\|^2}{\|x_k-x_\star\|^2}\leqslant \tau(\mu,L,\gamma_k)$ for any $d\in\mathbb{N}$, for any $f\in\mathcal{F}_{\mu,L}$, and for all $x_k,x_{k+1}\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$, and $x_\star\in\argmin_x f(x)$ (with $x_\star\neq x_k$). It trivially follows that $\tau(\mu,L,\gamma_k)$ upper bounds the RHS of~\eqref{ex1:eq:base_pep1}.
+	By definition of~\eqref{ex1:eq:distance}, this is even the smallest one, hence the equality.
+	}
+	\item Show that
+	\begin{equation}\label{ex1:eq:base_pep2}
+		\begin{aligned}
+		\tau(\mu,L,\gamma_k)=\sup_{\substack{d\\x_k,x_{k+1},x_\star\\g_k,g_\star\\f_k,f_\star}} \quad & \frac{{\|x_{k+1}-x_\star\|}^2}{\|x_k-x_\star\|^2}\\
+		\text{s.t. } & \exists f\in\mathcal{F}_{\mu,L} \text{ such that }\left\{\begin{array}{ll}
+			f_i=f(x_i)\quad & i=k,\star\\
+			g_i=\nabla f(x_i)\quad & i=k,\star
+			\end{array}\right.\\
+		& x_{k+1}=x_k-\gamma_k  g_k\\
+		& g_\star=0.\\
+		\end{aligned}
+		\end{equation}
+	\correction{This operation does not change the optimal value of the problems. From any feasible point to~\eqref{ex1:eq:base_pep1} one can create a feasible point to~\eqref{ex1:eq:base_pep2} with the same objective value, and vice-versa.}
+	
+	\item Using \Cref{thm:interp_smoothstronglyconvex}, show that $\tau(\mu,L,\gamma_k)$ is also equal to
+	\begin{equation}\label{ex1:eq:base_pep3}
+		\begin{aligned}
+		\sup_{\substack{d\\x_k,x_{k+1},x_\star\\g_k,g_\star\\f_k,f_\star}} \quad & \frac{{\|x_{k+1}-x_\star\|}^2}{\|x_k-x_\star\|^2}\\
+		\text{s.t. } & f_\star\geqslant f_k+\inner{g_k}{x_\star-x_k}+\tfrac{1}{2L}\normsq{g_\star-g_k}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_\star-x_k-\tfrac{1}{L}(g_\star-g_k)}\\
+			&f_k\geqslant f_\star+\inner{g_\star}{x_k-x_\star}+\tfrac{1}{2L}\normsq{g_k-g_\star}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_k-x_\star-\tfrac{1}{L}(g_k-g_\star)}\\
+		& x_{k+1}=x_k-\gamma_k  g_k\\
+		& g_\star=0.\\
+		\end{aligned}
+		\end{equation}
+		
+	\correction{From \Cref{thm:interp_smoothstronglyconvex}, there exists an $L$-smooth $\mu$-strongly convex function satisfying $g_k=\nabla f(x_k)$, $g_\star=\nabla f(x_\star)$, $f_k=f(x_k)$ and $f_\star=f(x_\star)$ if and only if those inequalities are satisfied. Hence any feasible point to~\eqref{ex1:eq:base_pep3} can be converted to a feasible point to~\eqref{ex1:eq:base_pep2} and vice-versa (\Cref{thm:interp_smoothstronglyconvex} provides necessary and sufficient conditions).}
+	\item Using the change of variables
+			\begin{align}\label{ex1:eq:GRAM}
+			G \triangleq \begin{bmatrix}
+			\|x_k-x_\star\|^2 & \langle g_k,x_k-x_\star\rangle\\
+			\langle g_k, x_k-x_\star\rangle & \| g_k\|^2
+			\end{bmatrix},\quad 	F \triangleq 			f_k-f_\star,
+			\end{align}
+			(note that $G=[x_k-x_\star \quad g_k]^\top [x_k-x_\star \quad g_k]\succcurlyeq 0$), show that $\tau(\mu,L,\gamma_k)$ can be computed as
+			\begin{equation}\label{ex1:eq:SDP_grad1}
+			\begin{aligned}
+			\sup_{G,\, F} \quad & \frac{G_{1,1}+\gamma_k ^2 G_{2,2}-2\gamma_k G_{1,2}}{G_{1,1}}\\
+			\text{s.t. } \quad & F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{L}{L-\mu}G_{1,2}\leqslant 0\\
+			&-F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{\mu}{L-\mu}G_{1,2}\leqslant 0\\
+			&G\succcurlyeq 0.
+			\end{aligned}
+			\end{equation}
+	Hint: you can use the following fact (``Cholesky factorization''). Let $X\in \mathbb{S}^n$ (symmetric matrix of size $n\times n$), we have:
+	\begin{center}
+	$X\succcurlyeq 0$ with $\mathrm{rank}(X)\leqslant d$ $\Leftrightarrow$ $\exists P\in\mathbb{R}^{d\times n}$ such that $X=P^\top\! P$.
+	\end{center}
+	
+	
+	\correction{We show that any feasible point to~\eqref{ex1:eq:base_pep3} can be converted to a feasible point of~\eqref{ex1:eq:SDP_grad1} with the same optimal value, and vice-versa.
+	
+	First, by defining $P\triangleq[x_k-x_\star \quad g_k]\in\mathbb{R}^{2\times d}$ we have $G\triangleq P^{\top\!}P$ with $\mathrm{rank}(G)\leq d$ by construction. Further, by substituting $x_{k+1}=x_k-\gamma_k g_k$ in the two inequalities, we obtain that they can both be expressed linearly in terms of $G$ and $F$. Similarly, the objective function can be expressed using the elements of $G$. Therefore, any feasible point to~\eqref{ex1:eq:base_pep3} can be translated to a feasible point of
+
+			\begin{equation*}
+			\begin{aligned}
+			\sup_{d,\,G,\, F} \quad & \frac{G_{1,1}+\gamma_k ^2 G_{2,2}-2\gamma_k G_{1,2}}{G_{1,1}}\\
+			\text{s.t. } \quad & F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{L}{L-\mu}G_{1,2}\leqslant 0\\
+			&-F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{\mu}{L-\mu}G_{1,2}\leqslant 0\\
+			&G\succcurlyeq 0\\
+			&\mathrm{rank}(G)\leqslant d,
+			\end{aligned}	
+			\end{equation*}
+with the same optimal value. Obviously, any feasible point to the last problem is feasible (with the same objective value) for~\eqref{ex1:eq:SDP_grad1}, and the optimal value of~\eqref{ex1:eq:SDP_grad1} is therefore at least equal to the optimal value of~\eqref{ex1:eq:base_pep3} (any feasible point to~\eqref{ex1:eq:base_pep3} can be translated to a feasible point of~\eqref{ex1:eq:SDP_grad1} with the same objective value).
+	
+	In the other direction, from any feasible point $(G,F)$ of~\eqref{ex1:eq:SDP_grad1}: $G\succcurlyeq 0$ with $\mathrm{rank}(G)\leq d$ (for some $d\in\mathbb{N}$, with $d\leqslant 2$ due to the fact $G\in\mathbb{S}^2$), one can obtain some $P\in\mathbb{R}^{d\times 2}$ with $G=P^{\top\!}P$ (note: $P$ is usually not unique). Choosing $x_\star=0\in\mathbb{R}^d$, $x_k=P_{:,1}$ (first column of $P$) and $g_k=P_{:,2}$, as well as $x_{k+1}=x_k-\gamma_k g_k$, $f_\star=0$ and $f_k=F$, we obtain a feasible point to~\eqref{ex1:eq:base_pep3} (the inequalities of~\eqref{ex1:eq:base_pep3} in terms of $(P,F)$ are exactly those of~\eqref{ex1:eq:SDP_grad1} expressed in terms of $(G,F)$) with the same objective value.
+	
+	
+	}
+	
+	\item Show that $\tau(\mu,L,\gamma_k)$ can also be computed as a semidefinite program (SDP):
+			\begin{equation}\label{ex1:eq:SDP_grad2}
+			\begin{aligned}
+			\sup_{G,\, F} \quad & G_{1,1}+\gamma_k ^2 G_{2,2}-2\gamma_k G_{1,2}\\
+			\text{s.t. } \quad & F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{L}{L-\mu}G_{1,2}\leqslant 0\\
+			&-F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{\mu}{L-\mu}G_{1,2}\leqslant 0\\
+			&G_{1,1}= 1\\
+			&G\succcurlyeq 0
+			\end{aligned}
+			\end{equation}
+	(note that at this stage, it is actually simpler to show that the supremum is attained and that we can write $\max$ instead of $\sup$.)
+	
+	\correction{This statement relies on an homogeneity argument: remark that for any $\alpha>0$ and any feasible point $(G,\,F)$ for \eqref{ex1:eq:SDP_grad1} the point $(\alpha G,\,\alpha F)$ is also feasible for \eqref{ex1:eq:SDP_grad1} without affecting the objective value. Thereby, for any feasible point $(G,F)$ for which $G_{1,1}\neq 0$  one can normalize the pair by picking $\alpha=\frac{1}{G_{1,1}}$, which is equivalent to restrict ourselves to solutions satisfying $G_{1,1}=1$. Since the optimum is attained on points for which $G_{1,1}\neq 0$, we reach the desired conclusion.
+	}
+	\item Let $L\geqslant\mu>0$ and define $h_k\triangleq \gamma_k L$ and $\kappa\triangleq L/\mu$. Show that $\tau(\mu,L,\gamma_k)=\tau(1/\kappa,1,h_k)$ (in other words: we can study the case $L=1$ only and deduce the dependence of $\tau$ on $L$ afterwards).
+	
+	\correction{One can rewrite the problem in terms of $h_k$:\begin{equation*}
+			\begin{aligned}
+			\sup_{G,\, F} \quad & G_{1,1}+h_k ^2 L^2 G_{2,2}-2h_k L G_{1,2}\\
+			\text{s.t. } \quad & F + \tfrac{L}{2(\kappa-1)} G_{1,1}+\tfrac{1}{2\mu(\kappa-1)}G_{2,2}-\tfrac{\kappa}{\kappa-1}G_{1,2}\leqslant 0\\
+			&-F + \tfrac{L}{2(\kappa-1)} G_{1,1}+\tfrac{1}{2\mu(\kappa-1)}G_{2,2}-\tfrac{1}{\kappa-1}G_{1,2}\leqslant 0\\
+			&G_{1,1}= 1\\
+			&G\succcurlyeq 0,
+			\end{aligned}
+			\end{equation*}
+			rewritting the problem in terms of $\tilde{G}$ and $\tilde{F}$ as
+			\begin{align*}
+			\tilde{G} \triangleq \begin{bmatrix}
+			\|x_k-x_\star\|^2 & \langle g_k,x_k-x_\star\rangle/L\\
+			\langle g_k, x_k-x_\star\rangle/L & \| g_k\|^2/L^2
+			\end{bmatrix},\quad 	\tilde{F} \triangleq 		(	f_k-f_\star)/L,
+			\end{align*}
+			i.e., $\tilde{G}\triangleq [x_k-x_\star \quad g_k/L]^\top [x_k-x_\star \quad  g_k/L]\succcurlyeq 0$); we arrive to\begin{equation*}
+			\begin{aligned}
+			\sup_{\tilde{G},\, \tilde{F}} \quad & \tilde{G}_{1,1}+h_k ^2 \tilde{G}_{2,2}-2h_k \tilde{G}_{1,2}\\
+			\text{s.t. } \quad & \tilde{F} + \tfrac{1}{2(\kappa-1)} \tilde{G}_{1,1}+\tfrac{\kappa}{2(\kappa-1)}\tilde{G}_{2,2}-\tfrac{\kappa}{\kappa-1}\tilde{G}_{1,2}\leqslant 0\\
+			&-\tilde{F} + \tfrac{1}{2(\kappa-1)} \tilde{G}_{1,1}+\tfrac{\kappa}{2(\kappa-1)}\tilde{G}_{2,2}-\tfrac{1}{\kappa-1}\tilde{G}_{1,2}\leqslant 0\\
+			&G_{1,1}= 1\\
+			&\tilde{G}\succcurlyeq 0,
+			\end{aligned}
+			\end{equation*}
+			where the two inequalities were obtained by dividing the two corresponding inequalities of the previous formulation by $L$. This last formulation is a function of $h_k$ and $\kappa$ only, and the conclusion easily follows.
+			
+			Note that there are other ways (not relying on the sampled version of the problem) to arrive to this conclusion.}
+			
+	\item Complete the \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Exercise01.ipynb}{\pepit code} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Codes/Matlab/Exercise1.m}{\pesto code}) for computing $\tau(\mu,L,\gamma_k)$ and compute its value for a few numerical values of $\mu$ and $\gamma_k$.
+	
+	\correction{See notebook.}
+	
+	\item Set $L=1$ and compute the optimal value of $\gamma_k$ numerically for a few values of $\mu$. Similarly, compute the range of $\gamma_k$ for which the ratios is smaller than $1$ in the worst-case.
+	
+	\correction{The optimal value for $\gamma_k$ should match $2/(L+\mu)$. The range of acceptable stepsizes for convergence is $\gamma_k\in(0,2/L)$.}
+	
+	\item Update your code for computing (numerically) the worst-case ratio $\frac{\|\nabla f(x_{k+1})\|^2}{\|\nabla f(x_k)\|^2}$ as a function of $L$, $\mu$, and $\gamma_k$. For what values of $\gamma_k$ do you observe that this ratio is smaller than $1$?  How would you update the SDP formulation for taking this change into account?
+	
+	\correction{The optimal stepsize should still match $2/(L+\mu)$ and the acceptable stepsize range is still $\gamma_k\in(0,2/L)$. The code needs to be updated by changing the performance measure and initial condition.
+	
+	There are several natural ways to adapt the problem to the ratios of consecutive gradients, as follows: first,~\eqref{ex1:eq:base_pep1} should simply be updated by changing its objective. Second,~\eqref{ex1:eq:base_pep2} can be updated to incorporate the gradient of $g_{k+1}$ (which is in the objective), perhaps naturally leading to
+	\begin{equation*}
+		\begin{aligned}
+		\sup_{\substack{d\\x_k,x_{k+1},x_\star\\g_k,g_{k+1},g_\star\\f_k,f_{k+1},f_\star}} \quad & \|g_{k+1}\|^2\\
+		\text{s.t. } & \exists f\in\mathcal{F}_{\mu,L} \text{ such that }\left\{\begin{array}{ll}
+			f_i=f(x_i)\quad & i=k,k+1,\star\\
+			g_i=\nabla f(x_i)\quad & i=k,k+1,\star
+			\end{array}\right.\\
+		& x_{k+1}=x_k-\gamma_k  g_k\\
+		& \|g_k\|^2= 1\\
+		& g_\star=0.\\
+		\end{aligned}
+		\end{equation*}
+	However, this formulation naturally translates to a $3\times 3$ SDP with
+			\begin{align*}
+			G \triangleq \begin{bmatrix}
+			\|x_k-x_\star\|^2 & \inner{ g_k}{x_k-x_\star} & \inner{g_{k+1}}{x_k-x_\star}\\
+			\inner{x_k-x_\star}{g_k} & \| g_k\|^2 & \inner{ g_{k+1}}{g_k}\\
+			\inner{x_k-x_\star}{g_{k+1}} & \inner{g_k}{g_{k+1}} & \|g_{k+1}\|^2
+			\end{bmatrix},\quad 	F \triangleq 			[f_k-f_\star\quad f_{k+1}-f_\star].
+			\end{align*}
+	along with $6$ interpolation inequalities (two inequalities per pair of points in the discrete representation). A simpler representation is as follows using only two points (no need to incorporate~$x_\star$)
+	\begin{equation*}
+		\begin{aligned}
+		\sup_{\substack{d\\x_k,x_{k+1}\\g_k,g_{k+1}\\f_k,f_{k+1}}} \quad & \|g_{k+1}\|^2\\
+		\text{s.t. } & \exists f\in\mathcal{F}_{\mu,L} \text{ such that }\left\{\begin{array}{ll}
+			f_i=f(x_i)\quad & i=k,k+1\\
+			g_i=\nabla f(x_i)\quad & i=k,k+1
+			\end{array}\right.\\
+		& x_{k+1}=x_k-\gamma_k  g_k\\
+		& \|g_k\|^2=1,\\
+		\end{aligned}
+		\end{equation*}
+		which can be encoded as a $2\times 2$ SDP using
+			\begin{align*}
+			G \triangleq \begin{bmatrix}
+			\| g_k\|^2 & \inner{ g_{k+1}}{g_k}\\
+			\inner{g_k}{g_{k+1}} & \|g_{k+1}\|^2
+			\end{bmatrix},\quad 	F \triangleq 			f_{k+1}-f_k,
+			\end{align*}
+			and hence only $2$ inequalities arising from interpolation constraints.
+	}
+	
+	\item Update your code for computing (numerically) the worst-case ratio $\frac{f(x_{k+1})-f(x_\star)}{f(x_{k})-f(x_\star)}$ as a function of $L$, $\mu$, and $\gamma_k$. For what values of $\gamma_k$ do you observe that this ratio is smaller than $1$? How would you update the SDP formulation for taking this change into account?
+	
+	\correction{The optimal stepsize should still match $2/(L+\mu)$ and the acceptable stepsize range is still $\gamma_k\in(0,2/L)$. The SDP follows the same changes as for the previous questions (with objective functions instead of gradients). Results in a $3\times 3$ SDP involving $6$ inequalities from interpolation. The worst-case convergence rate in terms of this ratio should also match that in terms of the squared distance and that in terms of squared gradient norms; namelly $\tau(\mu,L,\gamma_k)=\max\{(1-\gamma_k L)^2,(1-\gamma_k\mu)^2\}$.}
+	
+	\item Update your code for computing (numerically) the worst-case ratio $\frac{\|x_{N}-x_\star\|^2}{\|x_0-x_\star\|^2}$ as a function of $L$, $\mu$, and a sequence $\{\gamma_k\}_{0\leqslant k\leqslant N-1}$. How would you update the SDP formulation for taking this change into account?
+	
+	\correction{ Following the same steps, we arrive to \begin{equation*}
+		\begin{aligned}
+		\sup_{\substack{d\\x_0,x_1,\ldots,x_{N},x_\star\\g_0,g_{1},\ldots,g_{N-1},g_\star\\f_k,f_{k+1},f_\star}} \quad & \|x_N-x_\star\|^2\\
+		\text{s.t. } & \exists f\in\mathcal{F}_{\mu,L} \text{ such that }\left\{\begin{array}{ll}
+			f_i=f(x_i)\quad & i=0,1,\ldots,N-1,\star\\
+			g_i=\nabla f(x_i)\quad & i=0,1,\ldots,N-1,\star
+			\end{array}\right.\\
+		& x_{i+1}=x_i-\gamma_i  g_i \quad i=0,1,\ldots,N-1\\
+		& \|x_0-x_\star\|^2= 1\\
+		& g_\star=0.\\
+		\end{aligned}
+		\end{equation*}
+	This formulation naturally translates to a $(N+1)\times (N+1)$ SDP with
+			\begin{align*}
+			P &\triangleq [x_0-x_\star,\, g_0,\, g_1,\,\ldots,\,g_{N-1}],\, G \triangleq P^{\top\!}P\succcurlyeq0,\\ F &\triangleq 			[f_0-f_\star,\, f_{1}-f_\star,\, f_{N-1}-f_\star].
+			\end{align*}
+	along with $N(N+1)$ interpolation inequalities (two inequalities per pair of points in the discrete representation). As a validation test for your code, using any constant stepsize rule $\gamma_k=\gamma$ should lead to a worst-case ratio equal to $ \left(\max\{(1-\gamma_k L)^2,(1-\gamma_k\mu)^2\}\right)^n$}
+	
+	\item Using previous points: assume you computed an optimal solution to the SDP formulation for the ratio $\frac{\|x_{N}-x_\star\|^2}{\|x_0-x_\star\|^2}$ what is the link between the rank of the Gram matrix $G$ and the dimension $d$ in which this counter-example lives? 
+	
+	\correction{The dimension of the counter-example corresponds to $\mathrm{rank}(G)$.}
+	
+	\item For obtaining ``low-dimensional'' worst-case instances, it is often useful to use heuristics. One of them is known as the ``trace heuristic'' (alternatively, the ``logdet heuristic'' is sometimes more efficient; see \Cref{ex:halpern}), which consists in solving a second optimization problem, whose solution hopefully forces $G$ to have a lower rank. The trace heuristic for~\eqref{ex1:eq:SDP_grad2} consists in solving
+	\begin{equation}\label{ex1:eq:trace}
+	\begin{aligned}
+				\min_{G,\, F} \quad & \mathrm{Trace}(G)\\
+			\text{s.t. } \quad & F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{L}{L-\mu}G_{1,2}\leqslant 0\\
+			&-F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{\mu}{L-\mu}G_{1,2}\leqslant 0\\
+			&G_{1,1}= 1\\
+			&G_{1,1}+\gamma_k ^2 G_{2,2}-2\gamma_k G_{1,2}=\tau(\mu,L,\gamma_k)\\
+			&G\succcurlyeq 0,
+	\end{aligned}
+	\end{equation}
+	for which one first needs to obtain a precise approximation of $\tau(\mu,L,\gamma_k)$. 
+	
+	The trace heuristic is already implemented within \pepit and \pesto; see this \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise01.ipynb}{\pepit code} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Codes/Matlab/Exercise1_dimReduction.m}{\pesto code}). Can you plot the resulting worst-case function(s) for a few different values of $N$ (e.g., $N=1,2,5,10$) with $\gamma_k=\tfrac{1}{L}$. Does it correspond to a simple function? (Hint: two extremely simple examples of $L$-smooth $\mu$-strongly convex functions are $\tfrac{\mu}{2}x^2$ and $\tfrac{L}{2}x^2$). Can you use this conclusion for ``guessing'' an expression for $\tau(\mu,L,1/L)$ based on the behavior of gradient descent on the worst-case function that you identified?
+	
+	\correction{Experiments should lead to the observation that $\tfrac{\mu}{2}x^2$ is a low-dimensional worst-case function for all $N$ (for the particular choice of stepsize $1/L$).
+	
+	If the worst-case behavior is achieved (among others) on this function, the convergence rate is given by $\tau(\mu,L,1/L)=(1-\mu/L)^2$, since $x_{k+1}-x_\star=x_k-\gamma_k \nabla f(x_k)-x_\star=(1-\mu\gamma_k)(x_0-x_\star)$ on this simple quadratic function.}
+
+	\item Set $\gamma_k=\tfrac{1}{L}$ and $\mu=0$. What worst-case ratio $\frac{\|x_{N}-x_\star\|^2}{\|x_0-x_\star\|^2}$ do you observe numerically? A classical way to avoid such a pathological behavior  (in the analyses) is to study different types of ratios. Modify your code for studying the ratio $\frac{f(x_N)-f_\star}{\|x_0-x_\star\|^2}$. Can you guess the dependence of the worst-case ratio on $N$ based on a few numerical trials? and the dependence on $L$?
+	
+	\correction{The worst-case ratio $\frac{\|x_{N}-x_\star\|^2}{\|x_0-x_\star\|^2}$ is equal to $1$ (i.e., no guaranteed convergence); the worst-case ratio $\frac{f(x_N)-f_\star}{\|x_0-x_\star\|^2}$ should match exactly $\frac{L}{4N+2}$.}
+	
+	
+	\item Same question with $\gamma_k=\tfrac{1}{L}$, $\mu=0$, and the ratio $\frac{\|\nabla f(x_N)\|^2}{\|x_0-x_\star\|^2}$.
+	
+	\correction{The worst-case ratio should match exactly $\frac{L^2}{(N+1)^2}$.}
+	
+	\item Same question with $\gamma_k=\tfrac{1}{L}$, $\mu=0$, and the ratio $\frac{\|x_N-x_\star\|^2}{\|\nabla f(x_0)\|^2}$.
+	
+	\correction{The worst-case ratio should be unbounded (\pepit returns an error for telling this). A possibility for finding low-dimensional worst-case examples illustrating this is to fix some threshold $\epsilon$ and to solve the trace minimization problem with $\|\nabla f(x_0)\|^2=1$ and $\|x_N-x_\star\|^2=\epsilon$ for a few relatively large values of $\epsilon$. For example, set $\|\nabla f(x_0)\|^2=1$, $L=1$, $\gamma_k=1$; the following Huber function
+\begin{equation}
+f(x)=\left\{\begin{array}{ll}
+|x| - \tfrac{1}{2} & \text{ if } \|x\|\geqslant 1\\
+\tfrac{1}{2}x^2 & \text{ otherwise, }
+\end{array}\right.
+\end{equation}	
+allows obtaining arbitrarily large $\|x_N-x_\star\|^2$ simply by taking $x_0$ arbitrarily far away from $x_\star=0$. That is, pick $x_0=N+\epsilon$ (with $\epsilon>1$), we get $x_N=\epsilon$. As a conclusion, this type of bounds is not appropriate (it allows for arbitrarily bad guarantees by construction).}
+	
+	\item Based on your current experience, what are, according to you, the key elements which allowed casting the worst-case analysis as an SDP?
+	
+	\correction{ Key elements:
+	\begin{enumerate}
+	\item the class of functions admits simple quadratic interpolation conditions that can be represented within an SDP,
+	\item the class of algorithm is simple: the stepsizes are fixed before hand and do not depend on the function class,
+	\item the ``performance measure'' and ``initial conditions'' can be represented linearly in terms of the Gram matrix.
+	\end{enumerate}
+	
+	}
+	\end{enumerate}
+	\end{exercise}
+
+At this stage, the reader is familiar with necessary ingredients for attacking most exercises from \Cref{s:exo}. Before going further, we advise the reader to go through~\Cref{ex:accel1}. 
+
+The goal of the next exercise is to link what we have seen so far with ``classical convergence proofs''. That is, we want to illustrate how to create rigorous worst-case convergence bounds using the previous concept together with SDP duality. Once such a proof is found, one can convert it to a certificate that is easy to verify without resorting on any semidefinite programming.
+
+	\begin{exercise}[Gradient method---``dual performance estimation'']\label{ex2} This exercise uses the same problem formulations and notation as \Cref{ex1}.
+	\begin{enumerate}
+		\item Using Lagrangian duality with the following primal-dual pairing ($\tau,\lambda_1,\lambda_2$ are dual variables)
+	\begin{equation}\label{eq:ex2:assign_dual}
+			\begin{aligned}
+			& F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{L}{L-\mu}G_{1,2}\leqslant 0&&:\lambda_1\\
+			&-F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{\mu}{L-\mu}G_{1,2}\leqslant 0&&:\lambda_2\\
+			&G_{1,1}= 1&&:\rho,
+			\end{aligned}
+			\end{equation}
+one can show that (we will do it in the sequel):
+		\begin{equation}\label{eq:ex1_dual}	 
+		\begin{aligned}
+			\min_{\rho,\lambda_1,\lambda_2\geqslant 0} & \,\rho\\
+			\text{s.t. }& S=\begin{bmatrix}
+				\rho-1+\frac{\lambda_1 L\mu}{L-\mu } & \gamma_k-\frac{\lambda_1 (\mu +L)}{2 (L-\mu )} \\
+				\gamma_k-\frac{\lambda_1 (\mu +L)}{2 (L-\mu )} & \frac{\lambda_1}{L-\mu }-\gamma_k^2 \\
+			\end{bmatrix}\succcurlyeq 0\\
+			&0=\lambda_1-\lambda_2,
+		\end{aligned}
+		\end{equation}
+is a standard Lagrangian dual for the problem of computing $\tau(\mu,L,\gamma_k)$. Note that equality holds due to strong duality (for going further: prove strong duality using a Slater condition). 
+	
+	What is the relationship between feasible points to~\eqref{eq:ex1_dual} and $\tau(\mu,L,\gamma_k)$?
+	
+	\correction{This a standard SDP dual (see following exercises for obtaining it).
+	
+	As $\tau(\mu,L,\gamma_k)$ corresponds to the feasible point with the smallest value of $\rho$, all feasible points to the dual problem are upper bounds on $\tau(\mu,L,\gamma_k)$. That is, for any triplet \[(\rho(\mu,L,\gamma_k),\lambda_1(\mu,L,\gamma_k),\lambda_2(\mu,L,\gamma_k))\] that is feasible for~\eqref{eq:ex1_dual} for a certain range $(\mu,L,\gamma_k)\in\Lambda$, one has $\tau(\mu,L,\gamma_k)\leqslant \rho(\mu,L,\gamma_k)$ for all $(\mu,L,\gamma_k)\in\Lambda$. In other words, for all $(\mu,L,\gamma_k)\in\Lambda$ it holds that
+	\begin{equation*}
+	 \|x_{k+1}-x_\star\|^2 \leqslant \rho(\mu,L,\gamma_k) \|x_k-x_\star\|^2
+	\end{equation*}
+for all $d\in\mathbb{N}$, all $f\in\mathcal{F}_{\mu,L}(\mathbb{R}^d)$, and all $x_k,x_{k+1},x_\star\in\mathbb{R}^d$ such that $x_{k+1}=x_k-\gamma_k \nabla f(x_k)$ and $x_\star=\mathrm{argmin}_{x\in\mathbb{R}^d} f(x)$.}
+		\item (Lagrangian dual) Show that~\eqref{eq:ex1_dual} is a dual for~\eqref{ex1:eq:SDP_grad2} using the primal-dual pairing~\eqref{eq:ex2:assign_dual}.\label{ex2:LagrangianDual}
+		
+		\correction{For convenience, let us rewrite the constraints using more standard notations:
+	\begin{equation*}
+			\begin{aligned}
+			a_1 F+\mathrm{Trace}(A_1 G)\triangleq& F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{L}{L-\mu}G_{1,2}\leqslant 0\\
+			a_2 F+\mathrm{Trace}(A_2 G)\triangleq&-F + \tfrac{L\mu}{2(L-\mu)} G_{1,1}+\tfrac{1}{2(L-\mu)}G_{2,2}-\tfrac{\mu}{L-\mu}G_{1,2}\leqslant 0\\
+			a_0F+\mathrm{Trace}(A_0 G)\triangleq&G_{1,1}= 1,
+			\end{aligned}
+	\end{equation*}
+	as well as the the objective as $a_{\text{obj}}F+\mathrm{Trace}(A_{\text{obj}}G)\triangleq G_{1,1}+\gamma_k ^2 G_{2,2}-2\gamma_k G_{1,2}$. Those choices are valid with (this choice is unique for making all $A_i$'s symmetric):
+	\[ a_0=0,\,a_1=1,\,a_2=-1,\,a_{\text{obj}}=0, \]
+	and 
+	\[
+	A_0=\begin{pmatrix}
+	1 & 0 \\ 0 & 0
+	\end{pmatrix},\,
+	A_1=\frac{1}{2(L-\mu)}\begin{pmatrix}
+	L\mu & -L \\ -L & L\mu
+	\end{pmatrix},\,
+	A_2=\frac{1}{2(L-\mu)}\begin{pmatrix}
+	L\mu & -\mu \\ -\mu & L\mu
+	\end{pmatrix},
+	A_{\text{obj}}=\begin{pmatrix}
+	1 & -\gamma_k\\ -\gamma_k & \gamma_k^2
+	\end{pmatrix}.\]
+	The standard Lagrangian relaxation of the problem is then given by
+	\begin{equation}
+	\begin{aligned}
+	\min_{\lambda_1,\lambda_2,\rho\geqslant 0}\max_{G\succeq 0,F} \rho+\mathrm{Trace}\left(G (A_{\text{obj}}-\rho A_0-\lambda_1 A_1-\lambda_2 A_2)\right)+F(a_{\text{obj}}-\rho a_0-\lambda_1a_1-\lambda_2 a_2),
+	\end{aligned}
+	\end{equation}		
+	and is an upper bound on~$\tau(\mu,L,\gamma_k)$. For this upper bound to be nontrivial, we need (i) the factor multiplying $F$ to be equal to $0$ and (ii) the factor of $G$ to be negative semidefinite. Under those conditions, the Lagrangian dual corresponds to
+	\begin{equation}\label{ex2:eq:dual_formulation_from_Lagrangian}
+	\begin{aligned}
+	\min_{\lambda_1,\lambda_2,\rho\geqslant 0}& \rho\\
+	\text{s.t. }& S\triangleq-(A_{\text{obj}}-\rho A_0-\lambda_1 A_1-\lambda_2 A_2)\succcurlyeq 0\\
+	&s\triangleq -(a_{\text{obj}}-\rho a_0-\lambda_1a_1-\lambda_2 a_2)=0.
+	\end{aligned}
+	\end{equation}		
+	Substituting the expressions for $A_i$'s and $a_i$'s above, one recovers~\eqref{eq:ex1_dual} (the expression of $S$ is also obtained by substituting the expression of $\lambda_2$).
+	}
+		\item (Trick) The intent of this second point is to provide a shortcut to obtain a symbolical formulation of the dual problem. In short, consider the following variation of~\eqref{ex1:eq:base_pep3} with $d=1$:
+	\begin{equation}\label{ex2:eq:base_pep}
+		\begin{aligned}
+		\sup_{\substack{x_k,x_{k+1},x_\star\in\mathbb{R}\\g_k,g_\star\in\mathbb{R}\\f_k,f_\star\in\mathbb{R}}} \quad & {\|x_{k+1}-x_\star\|}^2\\
+		\text{s.t. } & f_\star\geqslant f_k+\inner{g_k}{x_\star-x_k}+\tfrac{1}{2L}\normsq{g_\star-g_k}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_\star-x_k-\tfrac{1}{L}(g_\star-g_k)}\\
+			&f_k\geqslant f_\star+\inner{g_\star}{x_k-x_\star}+\tfrac{1}{2L}\normsq{g_k-g_\star}+\tfrac{\mu}{2(1-\mu/L)}\normsq{x_k-x_\star-\tfrac{1}{L}(g_k-g_\star)}\\
+		& x_{k+1}=x_k-\gamma_k  g_k\\
+		& \|x_k-x_\star\|^2=1\\
+		& g_\star=0.\\
+		\end{aligned}
+		\end{equation}
+		After substitution of $x_{k+1}$ and $g_\star$ (one can also set $x_\star=f_\star=0$ wlog) in the objective and the constraints, write the Lagrangian $\mathcal{L}(x_k,g_k,f_k,x_\star,f_\star;\lambda_1,\lambda_2,\rho)$ (where $\lambda_1,\lambda_2,\rho\geqslant 0$ are associated as in~\eqref{eq:ex2:assign_dual}). Then, show that the expression of $S$ in~\eqref{eq:ex1_dual} (i.e., the LMI in~\eqref{eq:ex1_dual}) corresponds to $S=-\tfrac12\nabla^2_{x_k,g_k} \mathcal{L}(x_k,g_k,f_k,x_\star,f_\star;\lambda_1,\lambda_2,\rho)$ and that the linear constraint in~\eqref{eq:ex1_dual} corresponds to requiring $s=\nabla_{f_k} \mathcal{L}(x_k,g_k,f_k,x_\star,f_\star;\lambda_1,\lambda_2,\rho)$ to be zero.
+		
+An advantage of this approach is that it allows to easily obtain the dual formulations using symbolic computation (see, e.g., \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/codes/Jupyter/Exercise02.ipynb}{Python this notebook}, or this \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Codes/Matlab/Exercise2_symbolicalLMI.m}{Matlab file}).
+		
+		\correction{Because all expressions in the Lagrangian are quadratics in $(x_k-x_\star,g_k)$ and linear in $f_k-f_\star$, the gradient and Hessian of the Lagrangian respectively with respect to $f_k$ and to $(x_k,g_k)$ actually corresponds to the matrices $s$ and $S$ such that \[\mathrm{Trace}(-SG)+ s F=\mathcal{L}(x_k,g_k,f_k,x_\star,f_\star;\lambda_1,\lambda_2,\rho),\] where $G$ is the previously defined Gram matrix~\eqref{ex1:eq:GRAM}.}
+		
+	
+	\item Solve~\eqref{eq:ex1_dual} numerically. Do those values match those obtained in the first exercise? 
+	
+	For doing that, you can complete the following \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise02.ipynb}{Python code} (alternative: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Codes/Matlab/Exercise2.m}{Matlab code}).
+
+	\item Is there a simple closed-form expression for $\tau(\mu,L,\gamma_k)$? Does it match the numerical values obtained using the previous codes for computing $\tau(\mu,L,\gamma_k)$ numerically?
+	
+	Hint: can you solve~\eqref{eq:ex1_dual}	in closed-form?	Some help relying on symbolic computations is provided in the same notebook as in the previous exercise (alternative: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Codes/Matlab/Exercise2_closedform.m}{Matlab code}).
+	
+	
+	
+	\correction{The expression is $\tau(\mu,L,\gamma_k)=\max\{(1-\gamma_k L)^2,(1-\gamma_k\mu)^2\}$. Because the problem has a linear objective, the optimal $\rho$ (i.e., $\tau$) must be such that the solution is on the boundary of the PSD cone. That is, one can find an expression of $\rho$ as a function of the other variables and parameters by solving $\det(S)=0$. There are then two possibilities:
+	\begin{enumerate}
+	\item either the other eigenvalue of $S$ is zero (but one can observe, numerically, that the rank of $S$ is empirically equal to $1$ for non-optimal stepsizes)
+	\item or $\lambda_1$ can be chosen for minimizing the expression of $\rho$.
+	\end{enumerate}
+The notebook provides a path through this using simple symbolic computations.	
+}
+	
+	\item Consider $\gamma_k=\frac{1}{L}$ for simplicity. Given the optimal value of the multipliers $\rho,\lambda_1,\lambda_2$ in~\eqref{eq:ex1_dual}, can you write a ``direct'' proof for the linear convergence in terms of distance to an optimal point without resorting on any SDP formulation?
+	
+	\correction{A link might be drawn directly from writing the Lagrangian of~\eqref{ex1:eq:SDP_grad2}; but let us first start with a concrete answer, and explain it afterwards.
+	
+	
+	Concretely, sum up the following inequalities with their corresponding weights: $$\begin{array}{r}     f_\star \geqslant      f_k+\langle{g_k};{x_\star-x_k}\rangle+\frac{1}{2L}\lVert{g_k-g_\star}\rVert^2+\frac{\mu}{2(1-\mu/L)}\lVert{x_k-x_\star-\frac{{1}}{L}(g_k-g_\star)}\rVert^2  :\lambda_1,  \\     f_k \geqslant      f_\star+\langle{g_\star};{x_k-x_\star}\rangle+\frac{1}{2L}\lVert{g_k-g_\star}\rVert^2+\frac{\mu}{2(1-\mu/L)}\lVert{x_k-x_\star-\frac{{1}}{L}(g_k-g_\star)}\rVert^2:\lambda_2.     \end{array}$$ We use the following values for the multipliers: $\lambda_1=\lambda_2=2\gamma_k\tau(\mu,L,\gamma_k) \geqslant      0$
+After appropriate substitutions of $g_\star$, $x_{k+1}$, and $\tau(\mu,L,\gamma_k)$, using respectively $g_\star=0$, $x_{k+1}=x_k-\gamma_k g_k$ and $\tau(\mu,L,\gamma_k)=(1-\gamma_k\mu)$, and with little effort, one can check that the previous weighted sum of inequalities can be written in the form: $$ \begin{array}{rl}    \lVert{x_{k+1}-x_\star}\rVert^2  \leqslant      & \left(1-\gamma_k \mu \right)^2\lVert{x_{k}-x_\star}\rVert^2 -\frac{\gamma_k(2-\gamma_k (L+\mu))}{L-\mu} \lVert{\mu {(x_k  -x_\star)} - g_k}\rVert^2. \end{array}$$ This statement can be checked simply by expanding both expressions (i.e., the weighted sum and its reformulation) and verifying that all terms indeed match. Note that the term \[-\frac{\gamma_k(2-\gamma_k (L+\mu))}{L-\mu} \lVert{\mu {(x_k  -x_\star)} - g_k}\rVert^2\] is equal to $-\mathrm{Trace}(SG)$.
+
+Now, why is that that this simple weighted sum can be reformulated as is? Well, it turns out that this is a simple consequence of Lagrangian duality and our constructions above. First, our weighted sum can be rewritten as:
+\begin{equation*}
+\begin{aligned}
+0\geqslant &\lambda_1 \, \left[f_k-f_\star+\langle{g_k};{x_\star-x_k}\rangle+\frac{1}{2L}\lVert{g_k-g_\star}\rVert^2+\frac{\mu}{2(1-\mu/L)}\lVert{x_k-x_\star-\frac{{1}}{L}(g_k-g_\star)}\rVert^2\right]\\
+&+ \lambda_2 \, \left[f_\star-f_k+\langle{g_\star};{x_k-x_\star}\rangle+\frac{1}{2L}\lVert{g_k-g_\star}\rVert^2+\frac{\mu}{2(1-\mu/L)}\lVert{x_k-x_\star-\frac{{1}}{L}(g_k-g_\star)}\rVert^2\right]\\
+=&\lambda_1 \left[ a_1 F +\mathrm{Trace}(A_1 G)\right]+\lambda_2 \left[ a_2 F +\mathrm{Trace}(A_2 G)\right],
+\end{aligned}
+\end{equation*}
+where the equality follows from the construction of $G$ and $F$ and from the notations from \Cref{ex2} \S\ref{ex2:LagrangianDual}.
+
+Now, since $\lambda_1$, $\lambda_2$, and $\rho$ are constructed as feasible points to the dual problem~\eqref{eq:ex1_dual}, or equivalently~\eqref{ex2:eq:dual_formulation_from_Lagrangian}. Thereby, using the constraints in~\eqref{ex2:eq:dual_formulation_from_Lagrangian} (which are satisfied by $(\lambda_1,\lambda_2,\rho)$, we get
+\begin{equation*}
+\begin{aligned}
+0\geqslant &\lambda_1 \, \left[f_k-f_\star+\langle{g_k};{x_\star-x_k}\rangle+\frac{1}{2L}\lVert{g_k-g_\star}\rVert^2+\frac{\mu}{2(1-\mu/L)}\lVert{x_k-x_\star-\frac{{1}}{L}(g_k-g_\star)}\rVert^2\right]\\
+&+ \lambda_2 \, \left[f_\star-f_k+\langle{g_\star};{x_k-x_\star}\rangle+\frac{1}{2L}\lVert{g_k-g_\star}\rVert^2+\frac{\mu}{2(1-\mu/L)}\lVert{x_k-x_\star-\frac{{1}}{L}(g_k-g_\star)}\rVert^2\right]\\
+=&\lambda_1 \left[ a_1 F +\mathrm{Trace}(A_1 G)\right]+\lambda_2 \left[ a_2 F +\mathrm{Trace}(A_2 G)\right]\\
+=& (s+a_{\text{obj}}-\rho a_0) F +\mathrm{Trace}((S+A_{\text{obj}}-\rho A_0) G).
+\end{aligned}
+\end{equation*}
+Thefore, it suffices to reorganize the terms to reach
+\[   a_{\text{obj}}F +\mathrm{Trace}(A_{\text{obj}} G) \leqslant \rho (a_0 F+\mathrm{Trace}(A_0 G))- s F -\mathrm{Trace}(S G),\]
+and finally
+\[   a_{\text{obj}}F +\mathrm{Trace}(A_{\text{obj}} G) \leqslant \rho (a_0 F+\mathrm{Trace}(A_0 G))\]
+as $S\succcurlyeq 0$ and $s=0$. Note that this reasoning is still valid for other objectives of the original problem (i.e., other values of $a_0,A_0,a_{\text{obj}},A_\text{obj}$). For this exercise, the conclusion is reached by noting that $a_\text{obj}=a_0=0$.
+	} 
+	
+	
+	
+	
+	
+	\item A corresponding dual problem for the worst-case ratio $\frac{\|\nabla f(x_{k+1})\|^2}{\|\nabla f(x_k)\|^2}$ given by
+	\begin{equation}\label{eq:ex1_dual2}	 
+		\begin{aligned}
+			\min_{\rho,\lambda_1,\lambda_2\geqslant 0} & \,\rho\\
+			\text{s.t. }& S=\begin{bmatrix}
+		\rho+\lambda_1 \frac{(1-\gamma_k L)(1-\gamma_k \mu)}{L-\mu} & -\lambda_1\frac{2-\gamma_k(L+\mu)}{2(L-\mu)}\\
+		-\lambda_1\frac{2-\gamma_k(L+\mu)}{2(L-\mu)} & \frac{\lambda_1}{L-\mu}-1
+			\end{bmatrix}\succcurlyeq 0\\
+			&0=\lambda_1-\lambda_2.
+		\end{aligned}
+		\end{equation} Is there a simple closed-form solution for this problem? Alternatively: solve this problem numerically and try to guess a solution.
+		
+	\correction{The answer for the convergence rate is the same as that for the previous ratio in terms of distances, but the multiplier are different. The interested reader can modify the previous codes for obtaining the corresponding expressions.}
+	
+	\item Using the following primal-dual pairing
+	{\scriptsize\begin{equation*}
+	\begin{aligned}
+	& f(x_0)\geqslant f(x_\star)+\tfrac{1}{2L}\|\nabla f(x_0)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_0-x_\star-\tfrac1L \nabla f(x_0)\|^2&&:\lambda_1\\
+	& f(x_\star)\geqslant f(x_0)+\inner{\nabla f(x_0)}{x_\star-x_0}+\tfrac{1}{2L}\|\nabla f(x_0)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_0-x_\star-\tfrac1L \nabla f(x_0)\|^2&&:\lambda_2\\
+	& f(x_1)\geqslant f(x_\star)+\tfrac{1}{2L}\|\nabla f(x_1)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_1-x_\star-\tfrac1L \nabla f(x_1)\|^2&&:\lambda_3\\
+	& f(x_\star)\geqslant f(x_1)+\inner{\nabla f(x_1)}{x_\star-x_1}+\tfrac{1}{2L}\|\nabla f(x_1)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_1-x_\star-\tfrac1L \nabla f(x_1)\|^2&&:\lambda_4\\
+	& f(x_0)\geqslant f(x_1)+\inner{\nabla f(x_1)}{x_0-x_1}+\tfrac{1}{2L}\|\nabla f(x_0)-\nabla f(x_1)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_1-x_0-\tfrac1L (\nabla f(x_1)-\nabla f(x_0))\|^2&&:\lambda_5\\
+	& f(x_1)\geqslant f(x_0)+\inner{\nabla f(x_0)}{x_1-x_0}+\tfrac{1}{2L}\|\nabla f(x_0)-\nabla f(x_1)\|^2+\tfrac{\mu}{2(1-\mu/L)}\|x_1-x_0-\tfrac1L (\nabla f(x_1)-\nabla f(x_0))\|^2 &&:\lambda_6\\
+	&f(x_0)-f(x_\star)= 1&&:\rho
+	\end{aligned}
+	\end{equation*}}
+	a corresponding dual problem for the worst-case ratio $\frac{f(x_{k+1})-f_\star}{f(x_{k})-f_\star}$ is given by
+	{\scriptsize\begin{equation}\label{eq:ex1_dual3}	 
+	\begin{aligned}
+	\min_{\rho,\lambda_1,\lambda_2\geqslant 0} & \,\rho\\
+	\text{s.t. }& \begin{bmatrix}
+	\frac{\mu  L (\lambda_1+\lambda_2+\lambda_3+\lambda_4)}{L-\mu } & -\frac{L (\lambda_2+\gamma  \mu  (\lambda_3+\lambda_4))+\mu  \lambda_1}{L-\mu } & -\frac{L \lambda_4+\mu  \lambda_3}{L-\mu } \\
+	* & \frac{\gamma  \mu  (\gamma  L (\lambda_3+\lambda_4+\lambda_5+\lambda_6)-2 \lambda_5)-2 \gamma  L \lambda_6+\lambda_1+\lambda_2+\lambda_5+\lambda_6}{L-\mu } & \frac{\gamma  L \lambda_4+\lambda_5 (\gamma  L-1)+\gamma  \mu  (\lambda_3+\lambda_6)-\lambda_6}{L-\mu } \\
+	* & * & \frac{\lambda_3+\lambda_4+\lambda_5+\lambda_6}{L-\mu }
+	\end{bmatrix}\succcurlyeq 0\\
+	&0=\rho-\lambda_1+\lambda_2-\lambda_5+\lambda_6\\
+	&1=-\lambda_3+\lambda_4+\lambda_5-\lambda_6,
+	\end{aligned}
+	\end{equation}}where ``$*$'' denotes symmetrical elements in the PSD matrix. Is there a simple closed-form solution for this problem? Note that this SDP is already coded \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise1.ipynb}{here} (alternative in Matlab: \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Codes/Matlab/Exercise1_SDP_functionvalues.m}{here})
+	
+	Trick \#1: solve the problem numerically and plot some values for the multipliers; trick \#2: pick $\lambda_1=\lambda_3=\lambda_6=0$; does the problem simplify?
+	
+	Trick \#3: one can use trace norm of logdet minimization (on $S$), or $\|.\|_1$ norm minimization on $\lambda$'s on the dual side for trying to get simpler/sparser proofs. That being said, when there are only few inequalities involved, it is often easier to simply greedily try different combinations of $\lambda_i$'s to be set to $0$.
+	
+	\correction{ Two difficulties here: (i) the LMI is larger, and (ii) contrary to the previous cases, the solution is not unique, which makes it complicated for the symbolic solvers. A simple approach for overcoming this is to ``clean'' the problem by hand, e.g., by removing unnecessary multipliers manually.}
+	
+	\item Obtain the dual formulations for the problems of computing the worst-case ratios $\frac{\|\nabla f(x_{k+1})\|^2}{\|\nabla f(x_k)\|^2}$ and $\frac{f(x_{k+1})-f_\star}{f(x_{k})-f_\star}$, either using symbolic computations or by hand.
+	
+	\correction{See notebooks!}
+	\end{enumerate}
+	\end{exercise}
+	
+	
+	%==================================
+	%								%||
+	\section{Further exercises}\label{s:exo}		%||
+	%============================	%||
+	%==================================
+	The goal of this second set of exercises is to get familiar with the approach and to understand to what extend it applies beyond a single iteration of gradient descent. There main points of attention below can be categorized within three types:
+	\begin{itemize}
+	\item what type of algorithms can it study?
+	\item What classes of problems can it study?
+	\item What types of guarantees can it study?
+	\end{itemize}
+The corrections are much lighter and are mostly contained in a few notebooks.
+	\begin{exercise}[Sublinear convergence of gradient descent and acceleration]\label{ex:accel1}
+	For this exercise, we consider the problem of minimizing
+	\[\min_{x} f(x),\]
+	where $f$ is an $L$-smooth convex function (see \Cref{def:smoothconvex}). We consider three algorthms, which respectively iterate:
+	\begin{itemize}
+	\item a gradient method:
+	\[x_{k+1}=x_k-\tfrac{1}{L} \nabla f(x_k),\]
+	\item an heavy-ball method:
+	\begin{equation*}
+	\begin{aligned}
+	x_{k+1}=x_{k}+\tfrac{k}{k+2} (x_{k}-x_{k-1})-\tfrac{1}{k+2}\tfrac{1}{L} \nabla f(x_{k}),
+	\end{aligned}
+	\end{equation*}
+	\item an accelerated (or fast) gradient method:
+	\begin{equation*}
+	\begin{aligned}
+	x_{k+1}&=y_k-\tfrac{1}{L}\nabla f(y_k)\\
+	y_{k+1}&=x_{k+1}+\tfrac{k-1}{k+2}(x_{k+1}-x_k)
+	\end{aligned}
+	\end{equation*}
+	\end{itemize}
+	\begin{enumerate}
+	\item Consider the following ratios:
+	\begin{enumerate}
+	\item $\frac{f(x_N)-f_\star}{\|x_0-x_\star\|^2}$ and $\frac{\min_{0\leqslant i\leqslant N}\{f(x_i)-f_\star\}}{\|x_0-x_\star\|^2}$,
+	\item $\frac{\|\nabla f(x_N)\|^2}{\|x_0-x_\star\|^2}$ and $\frac{\min_{0\leqslant i\leqslant N}\{\|\nabla f(x_i)\|^2\}}{\|x_0-x_\star\|^2}$.
+	\end{enumerate}
+	Can we formulate the worst-case analyses for those methods and those ratios as SDPs? What is the influence of $N$ on its size and on the number of inequalities under consideration?
+	
+	\correction{Compared to \Cref{ex1}, it suffices to introduce a discrete version of $f$ sampled at $x_\star$ as well as at all iterates where a gradient is evaluated (i.e., $x_0,x_1,\ldots,x_N$). The discrete version of the function is handled via a larger Gram matrix $G=P^T P\succcurlyeq 0$ and a larger $F$ of the type:
+	\[ P \triangleq [x_0-x_\star,\,g_0,\,g_1,\,\ldots,\,g_N],\quad F \triangleq [f_0-f_\star,\,f_1-f_\star,\,\ldots,\,f_N-f_\star]\]
+	(note that $x_1,\ldots,x_N$ are not necessary in $P$ and in the Gram matrix as they are obtained by fixed linear combinations of $x_0$ and $g_0,\ldots,g_{N-1}$). Hence $G\in\mathbb{R}^{(N+2)\times (N+2)}$ and the number of interpolation inequalities is $(N+1) (N+2)=O(N^2)$ (two inequalities per pair of points in $\{x_\star,x_0,x_1,\ldots,x_N\}$).
+	
+	Then, for incorporating performance measures of type $\min_{0\leqslant i\leqslant N}\{\|\nabla f(x_i)\|^2\}$ it suffices to introduce a slack variable $t$ (which is the objective of the performance estimation problem, which is maximized) and to impose that $t\leqslant \|\nabla f(x_i)\|^2\triangleq G_{i+2,i+2}$ for $i=0,\ldots,N$. Similarly, for $\min_{0\leqslant i\leqslant N}\{f(x_i)-f_\star\}$ we introduce the slack variable $t$ (to be maximized) and impose $t\leqslant f(x_i)-f_\star\triangleq F_{i+1}$ for $i=0,\ldots,N$.
+	}
+	\item Using \pepit or \pesto compare those methods in terms of those ratios(for $L=1$ and as a function of $N$ few values of $N=0,1,\ldots,30$).
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise03.ipynb}{this notebook}.}
+	\end{enumerate}
+	\end{exercise}	
+	
+	\begin{exercise}[Primal proximal point method]\label{ex:ppm}
+	Consider the problem of minimizing a (closed, proper) convex function
+	\[ \min_{x\in\mathbb{R}^d} f(x),\]
+	with the proximal-point method (with stepsize $\gamma$):
+	\[ x_{k+1}=\argmin_{x\in\mathbb{R}^d} \{ f(x)+\tfrac{1}{2\gamma}\|x-x_k\|^2\}.\]
+	\begin{enumerate}
+	\item Note that using optimality conditions on the definition of the proximal-point iteration, one can rewrite the iteration as
+	\[ x_{k+1} = x_k - \gamma g_{k+1}, \]
+	with $g_{k+1}\in\partial f(x_{k+1})$ (the subdifferential of $f$ at $x_{k+1}$; i.e., $g_{k+1}$ is a subgradient at $x_{k+1}$). Can you reformulate the problem of finding a worst-case example for the ratio $\frac{f(x_N)-f_\star}{\|x_0-x_\star\|^2}$ as an SDP? What are the key ingredients for arriving to it?
+	
+	\correction{Essentially just as for gradient descent, except that (i) the gradient that is used for the update is that of the upcoming iterate (implicit update), and (ii) that the interpolation conditons are simplified (just convexity): $f_i\geqslant f_j+\inner{g_j}{x_i-x_j}$ for all $i,j\in\{\star,1,2,\ldots,N\}$ (no index $0$).}
+	
+	\item Provide a \pepit or \pesto code for computing the worst-case value for this ratio, and experiment with it.
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise04.ipynb}{this notebook}.}
+	
+	\item Guess the dependence of the worst-case ratio on $\gamma$ and on $N$; confirm your findings using numerics.
+	
+	\correction{The best bound on this ratio is $\frac{1}{4\gamma N}$.}
+	
+	\item Can you guess the shape of a worst-case function? You may want to use an heuristic for finding lower rank worst-case examples.
+	
+	\correction{Using a rank minimization heuristic such as the trace norm minimization or the logdet heuristic (implemented within \pepit and described in~\cite{fazel2003log}---see \href{https://web.stanford.edu/~boyd/papers/pdf/rank_min_heur_hankel.pdf}{pdf}), one can obtain that the worst-cases are achieved, among others, on some one-dimensional linear minimization problems of the form $\min_{x\geqslant 0} \,\, cx$ for properly chosen $c$ (see, \cite[Theorem 4.1]{taylor2015exact}; \href{https://arxiv.org/pdf/1512.07516.pdf}{pdf here}.)
+	
+	The code is provided in \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise04.ipynb}{this notebook}.}
+	\end{enumerate}
+	\end{exercise}
+	
+
+	\begin{exercise}[Projected gradient and Frank-Wolfe]\label{ex:FW}
+	We consider the minimization problem
+	\[ \min_{x\in Q} f(x), \]
+	where $f$ is an $L$-smooth convex function and $Q$ is a non-empty convex set with finite diameter (i.e., $\|x-y\|\leqslant D$ for all $x,y\in Q$ for some $D>0$). Given some $x_0\in Q$, we consider two possible first-order methods:
+	\begin{itemize}
+	\item projected gradient:
+	\begin{equation*}
+	\begin{aligned}
+	x_{k+1}=\mathrm{Proj}_Q\left[x_{k}-\tfrac{1}{L}\nabla f(x_k)\right]
+	\end{aligned}
+	\end{equation*}
+	\item conditional gradient (a.k.a., Frank-Wolfe):
+	\begin{equation*}
+	\begin{aligned}
+	y_k &= \argmin_{y\in Q} \inner{\nabla f(x_k)}{y}\\
+	x_{k+1} &= \tfrac{k}{k+2} x_k + \tfrac{1}{k+2} y_k.
+	\end{aligned}
+	\end{equation*}
+	\end{itemize}
+	
+	\begin{enumerate}
+	\item For each method, how can you write the problem of computing the worst-case for the value of $f(x_N)-f_\star$? (note that we do not need a denominator as the diameter $D<\infty$ is bounded).
+	
+	\correction{Denote by $\mathcal{I}_D$ the set of indicator functions (see \Cref{def:indicator}) with bounded diameter $D$. The problem of finding the worst-case is then formulated as a problem of finding a worst couple $(f,i_Q)$ with $f\in\mathcal{F}_{0,L}$ ($f$ is an $L$-smooth convex function) and $i_Q\in\mathcal{I}_D$. In other words, we aim to solve 
+	\begin{equation}\label{ex5:proj}
+	\begin{aligned}
+		\sup_{\substack{d,f,i_D\\x_0,\ldots,x_{N},x_\star}} \ &f(x_N)-f_\star\\
+		\text{s.t. } & f\in\mathcal{F}_{0,L},\, i_D\in\mathcal{I}_D \\
+		&x_{k+1}=\Pi_Q\left(x_k-\gamma_k  \nabla f(x_k)\right) \text{ for }k=0,\ldots,N-1\\
+		&\nabla f(x_\star)+s_\star=0 \text{ with }s_\star\in\partial i_Q(x_\star)\\
+		&i_Q(x_0)=0,
+		\end{aligned}
+	\end{equation} 
+for the projected gradient method. Note that we can rewrite the iteration as \[x_{k+1}=x_k-\gamma_k  \nabla f(x_k)-s_{k+1}\] with $s_{k+1}\in\partial i_Q(x_{k+1})$; that is, the projection is an implicit subgradient method on $i_Q(\cdot)$; this can be seen by using the definition of projection on $Q$ as $\mathrm{Proj}_Q(x)=\mathrm{argmin}_y \{ i_Q(y)+\tfrac12 \|y-x\|^2\}$. Note that we incorporated the constraint $i_Q(x_0)=0$ for enforcing $x_0$ to be feasible. For Frank-Wolfe, we aim to solve
+	\begin{equation}\label{ex5:FW}
+	\begin{aligned}
+		\sup_{\substack{d,f,i_D\\x_0,\ldots,x_{N},x_\star}} \ &f(x_N)-f_\star\\
+		\text{s.t. } & f\in\mathcal{F}_{0,L},\, i_D\in\mathcal{I}_D \\
+		& y_k = \argmin_{y\in Q} \inner{\nabla f(x_k)}{y} \text{ for }k=0,\ldots,N-1\\
+	&x_{k+1} = \tfrac{k}{k+2} x_k + \tfrac{1}{k+2} y_k \text{ for }k=0,\ldots,N-1\\
+		&\nabla f(x_\star)+s_\star=0 \text{ with }s_\star\in\partial i_Q(x_\star)\\
+		&i_Q(x_0)=0,
+		\end{aligned}
+	\end{equation} 
+	where the equality defining $y_k$'s can also be described in terms of optimality conditions of the linear minimization problem: $y_k = \argmin_{y} \inner{\nabla f(x_k)}{y}+i_Q(y) \Leftrightarrow 0=\nabla f(x_k)+s_k$ with $s_k\in\partial i_Q(y_k)$.
+	
+	}
+	
+	\item For each method, how can we sample the problem? (at which points do we need to sample each function?)
+	
+	\correction{For projected gradient: $f$ is sampled in terms of triplets $(x_k,g_k,f_k)$ for $k\in\{\star,0,1,\ldots,N\}$ and $i_Q$ is sampled in terms of triplets $(x_k,s_k,0)$ for $k\in\{\star,0,1,\ldots,N\}$ (the two functions are sampled at the same places).
+	
+	For Frank-Wolfe: $f$ is sampled in terms of triplets $(x_k,g_k,f_k)$ for $k\in\{\star,0,1,\ldots,N\}$ and $i_Q$ is sampled at $x_\star$, $x_0$ and $y_k$ for $k\in\{0,1,\ldots,N-1\}$ (the two functions are not sampled at the same places).
+	}
+	
+	\item Write a \pepit or \pesto code and guess the dependence on the iteration counter $N$ of the worst-case $f(x_N)-f_\star$ for each of those methods. What are the dependences on $D$ and $L$?
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise05.ipynb}{this notebook}.
+	
+	Both bounds should scale with $LD^2$ and be of order $O(N^{-1})$. For easy reference, the reader can compare his numerical bounds with:
+	\begin{itemize}
+	\item for projected gradient with $N\geqslant 1$
+	\[ f(x_N)-f_\star\leqslant \frac{LD^2}{4N},\]
+	see, e.g.,~\cite[Theorem 2.9]{drori2014contributions},
+	\item for Frank-Wolfe with $N\geqslant 1$
+	\[ f(x_N)-f_\star\leqslant \frac{2LD^2}{N+2}, \]
+	see, e.g.,~\cite[Theorem 1]{jaggi2013revisiting}.
+	\end{itemize}
+	
+	
+	}
+	\end{enumerate}
+	\end{exercise}	
+	
+\begin{exercise}[Proximal point method for monotone inclusions]\label{ex:ppm2}
+	For this exercise, we consider the problem of solving a monotone inclusion problem:
+	\[ \text{find } x\in\mathbb{R}^d \text{ such that } 0\in M(x),\]
+	where $M:\mathbb{R}^d\rightrightarrows {\mathbb{R}^d}$ (point to set mapping) is a (maximal) mononotone operator (see \Cref{def:monotone}). In this context, the proximal point method consists in iterating
+	\[ x_{k+1}=\mathrm{prox}_{\alpha M}(x_k)=(I+\alpha M)^{-1} x_k,\]
+(where $I$ is the identity operator) or equivalently 
+	\[ x_{k+1}=x_k-\alpha M(x_{k+1}).\]
+	\begin{enumerate}
+	\item Consider the ratio $\frac{\|x_{N}-x_{N+1}\|^2}{\|x_0-x_\star\|^2}$, where $x_\star$ is such that $0\in M(x_\star)$. Can you compute this worst-case ratio using an SDP? Hint: you can use \Cref{thm:monotone_interpolation}.
+	
+	\correction{As the discretization is the same as that for the proximal method in \Cref{ex:ppm}, except that no function values will be stored (because $M$ is an operator, not specifically related to a function).}
+	
+	\item Write a \pepit or \pesto code for studying this ratio as a function of $N$ and $\alpha$.
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise06.ipynb}{this notebook}.}
+	
+	\item Using dimension reduction, there should exist a low-dimensional worst-case example. Find it (numerically) and plot it.
+	
+	Hint: more information about the worst-case guarantee and a low-dimensional worst-case example can be found in~\cite{gu2020tight} (see \href{https://arxiv.org/pdf/1904.05495.pdf}{pdf}). Are your observations compatible with the fact that $M$ might encode a rotation matrix?
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise06.ipynb}{this notebook}. After dimension reduction, you should be able to plot a nice two-dimensional example nicely spiraling around some $x_\star$. This worst-case indeed corresponds to that in~\cite{gu2020tight}.}
+		
+	\end{enumerate}
+	\end{exercise}
+	
+
+	
+	\begin{exercise}[Fixed-point iterations]\label{ex:halpern}
+For this exercise, we consider the fixed point problem
+	\[ \text{find } x\in\mathbb{R}^d \text{ such that } x=F(x), \]
+	where $F:\mathbb{R}^d\rightarrow \mathbb{R}^d$ is a nonexpansive mapping (i.e., it is $1$-Lipschitz; that is, for all $x,y\in\mathbb{R}^d$, $\|F(x)-F(y)\|\leqslant \|x-y\|$).
+	\begin{enumerate}
+	\item The Halpern iteration is given by
+	\[ x_{k+1} = \left(1-\frac{1}{k+2}\right)F(x_k) + \frac{1}{k+2} x_0\]
+	Can you write an SDP formulation for computing the worst-case ratio $\frac{\|x_{N}-F(x_N)\|^2}{\|x_0-x_\star\|^2}$ (for some $x_\star=F(x_\star)$)?
+	
+	Hint: \Cref{thm:Lipschitz_interpolation} with $L=1$.
+	
+	\correction{As in previous examples, the key point is to realize that the problem can be sampled properly; see \Cref{thm:Lipschitz_interpolation} with $L=1$. Then, the algorithm can be formulated within the SDP as before (only ``interpolation inequalites'' must be adapted).}
+	
+	\item Write a \pepit or \pesto code for computing the worst-case value of this ratio. Can you guess the dependence in $N$ of the worst-case behavior of the previous ratio?
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise07.ipynb}{this notebook}.}
+	
+	\item Can you find low-dimensional worst-case examples for this method? (Hint: use a few iterations of the logdet heuristic (implemented within \pepit and described in~\cite{fazel2003log} (see \href{https://web.stanford.edu/~boyd/papers/pdf/rank_min_heur_hankel.pdf}{pdf})).
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise07.ipynb}{this notebook}.  There are indeed one-dimensional worst-case examples; see, e.g.,~\cite[Example 3.1]{lieder2017convergence}, or \href{http://www.optimization-online.org/DB_FILE/2017/11/6336.pdf}{this pdf}.}
+	
+	\item An alternative is the so-called Krasnolselskii-Mann iteration, which can be instantiated as
+	\[ x_{k+1} = \left(1-\frac{1}{k+2}\right)F(x_k) + \frac{1}{k+2} x_k\]
+	How does it compare to Halpern in terms of worst-case ratios?
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise07.ipynb}{this notebook}.  The Halpern has a better worst-case behavior in terms of the ratio defined above.}
+	\end{enumerate}
+	\end{exercise}
+	
+
+\begin{exercise}[Subgradient methods]\label{ex:subgradient} For this exercise, we consider the problem of minimizing an $M$-Lipschitz convex function (which is possibly nonsmooth; see \Cref{def:Lipschtzfunc})
+	\[ \min_{x} f(x),\]
+using a subgradient method $x_{k+1}=x_k-\gamma_k s_k$ with $s_k\in\partial f(x_k)$. We aim to compute worst-case bounds on $\min_{0\leqslant i\leqslant N}\{f(x_i)-f_\star\}$ for certain values of $N$ under the condition that $\|x_0-x_\star\|^2\leqslant R^2$ for some $x_\star\in\mathrm{argmin}_x \,f(x)$ and when $f\in\mathcal{C}_M$ (notation for closed, proper, convex, and $M$-Lipschitz). 
+	\begin{enumerate}
+	\item Write a code for computing a worst-case bound on $\min_{0\leqslant i\leqslant N}\{f(x_i)-f_\star\}$.
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise08.ipynb}{this notebook}.}	
+	
+	\item How does your bound compare to the known
+	\[ \min_{0\leqslant i\leqslant N}\{f(x_i)-f_\star\} \leqslant \frac{R^2+M^2\sum_{k=0}^{N-1}\gamma_k^2}{\sum_{k=0}^{N-1}\gamma_k}\]
+	for a few stepsize policies, including:
+	\begin{itemize}
+	\item fixed stepsize policy $\gamma_k=1$,
+	\item fixed stepsize policy depending on the horizon $\gamma_k=\frac{R}{M\sqrt{N+1}}$,
+	\item decreasing stepsize policy $\gamma_k=\frac{R}{M\sqrt{k+1}}$,
+	\item decreasing stepsize policy $\gamma_k=\frac{R}{M(k+1)}$.
+	\end{itemize}
+	
+	\correction{For all the rules, the numerically worst-case guarantee should be better than the known guarantee provided above. For some cases (e.g., fixed stepsize depending on the horizon), the guarantee is actually perfectly tight. See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise08.ipynb}{this notebook}.}
+	
+	\item Adapt your code for computing a worst-case bound on the last iterate $f(x_N)-f_\star$. Does the worst-case deteriorate?
+	
+	\correction{Yes, the method is not monotonic and the worst-case behavior at the last iterate is worse than that at the best iterate, contrasting with gradient descent in the smooth convex setting.}
+	
+	\item Evaluate the same two worst-case guarantees (best function value accuracy among the iterates and last one) for the quasi-monotone subgradient method: (from~\cite{nesterov2015quasi}, or~\cite{drori2018efficient}):
+	\begin{equation*}
+	\begin{aligned}
+	s_{k}&\in\partial f(x_{k})\\
+	d_{k}&=\frac{1}{k+2}\sum_{i=0}^{k}s_i\\
+	y_{k+1}&=\frac{k+1}{k+2}x_k+\frac{1}{k+2}x_0\\
+	x_{k+1}&=y_{k+1}-\frac{R}{M\sqrt{N+1}}d_k.
+	\end{aligned}
+	\end{equation*}
+	
+	\correction{ See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise08.ipynb}{this notebook}. The worst-case guarantees match $\frac{MR}{\sqrt{N+1}}$ for both the best and the last iterate.}
+	\end{enumerate}
+	
+	\end{exercise}
+	
+	\begin{exercise}[Proximal gradient method]\label{ex:pgm} We consider the composite convex minimization problem of the form
+	\[ \min_{x\in\mathbb{R}^d} \{F(x)\triangleq f(x)+h(x)\},\]
+where $f$ is $L$-smooth and $\mu$-strongly convex and $h$ is ccp (closed, convex, proper) so that its proximal operation is well-defined. We want to use the proximal gradient method
+\[ x_{k+1}=\argmin_{x\in\mathbb{R}^d}\{h(x)+\inner{\nabla f(x_k)}{x-x_k}+\tfrac{L}{2}\|x-x_k\|^2\}\]
+for solving the problem.
+	\begin{enumerate}
+	\item Can we formulate the problem of computing the worst-case ratio $\frac{\|x_{k+1}-x_\star\|^2}{\|x_k-x_\star\|^2}$ as an SDP? Describe at which points each function needs to be sampled. 
+	
+	\correction{This exercise is similar to \Cref{ex:FW} (projected gradient method): $f$ needs to be sampled at $x_\star$ and $x_k$, and $h$ needs to be sampled at $x_\star$ and $x_{k+1}$ (and evantually at $x_k$ if we want to use the fact that $x_k$ is feasible; but this is not necessary in the proof).}
+	
+	\item Write a code for computing it, and compare the numerical values with those of \Cref{ex1}.
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise09.ipynb}{this notebook}.}
+	
+	\item Can you find low-dimensional worst-case instances?
+	
+	\correction{Same worst-case instances as in \Cref{ex1}: either $\tfrac{L}{2}x^2$ or $\tfrac{\mu}{2}x^2$ depending on the stepsize choice. See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise09.ipynb}{this notebook}.}
+	\end{enumerate}
+	\end{exercise}
+
+\begin{exercise}[Douglas-Rachford]\label{ex:drs} Consider a composite convex minimization problem of the form
+	\[ \min_{x\in\mathbb{R}^d} \{F(x)\triangleq f(x)+h(x)\},\]
+where $f$ is $L$-smooth and $\mu$-strongly convex and $h$ is ccp (closed, convex, proper) so that both proximal operations are well-defined. We want to use the Douglas-Rachford (DR) method
+\begin{equation*}
+\begin{aligned}
+x_k & = \mathrm{prox}_{\alpha h}(w_k), \\
+y_k & =  \mathrm{prox}_{\alpha f}(2x_k - w_k),\\
+w_{k+1} & =  w_k + \theta (y_k - x_k),
+\end{aligned}
+\end{equation*}
+for solving the problem.
+	\begin{enumerate}
+	\item Let $w_0$ and $w_0'$ be two different starting points. Formulate the problem of computing the worst-case ratio $\frac{\|w_1-w_1'\|^2}{\|w_0-w_0'\|^2}$ where $w_1$ and $w_1'$ are the outputs of a DR iteration from respectively $w_0$ and $w_0'$. Where should the two functions be sampled?
+	
+	\correction{This is similar to previous examples. $h$ needs to be sampled at $x_0\triangleq\mathrm{prox}_{\alpha h}(w_0)$ and $x_0'\triangleq\mathrm{prox}_{\alpha h}(w_0')$; $f$ needs to be sampled at $y_0\triangleq\mathrm{prox}_{\alpha f}(2x_0 - w_0)$ and $y_0'\triangleq\mathrm{prox}_{\alpha f}(2x_0' - w_0')$.}
+	
+	\item Write a code for computing it. As a reference when $\theta=1$: how do the numerics compare to the bound $\|w_1-w_1'\|^2\leqslant \left(\max\left\{\frac{1}{1+\alpha \mu},\frac{\alpha L}{1+\alpha L} \right\}\right)^2\|w_0-w_0'\|^2$ (see, e.g.,~\cite[Theorem 2]{giselsson2016linear}).
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise10.ipynb}{this notebook}. The bounds should match.}
+	
+	\item Can you find low-dimensional worst-case instances?
+	
+	\correction{Yes, it is possible to find one-dimensional worst-case examples again.
+	
+	As follows from~\cite[Section 3.2]{giselsson2016linear}, one such worst-case is achieved on either $f(x)=\tfrac{\mu}{2}x^2$ and $h(x)=0$ or on $f(x)=\tfrac{L}{2}x^2$ and $h(x)=i_{\{0\}}(x)$ (indicator function of the set $\{0\}$).}
+	\end{enumerate}
+	\end{exercise}
+
+\begin{exercise}[Alternate projections]\label{ex:alt} We consider the problem of finding a point in the intersection of two closed convex sets:
+	\[ \text{find } x \in Q_1\cap Q_2,\]
+where $Q_1,Q_2\subseteq \mathbb{R}^d$ are two closed convex sets. We will compare, in terms of their worst-case behaviors, a few methods for solving this problem. 
+
+Write \pepit (or \pesto\!\!) codes for computing the worst-case ratios $\frac{\|\mathrm{Proj}_{Q_1}(x_N)-\mathrm{Proj}_{Q_2}(x_N)\|^2}{\|x_0-x_\star\|^2}$ (where $\mathrm{Proj}_Q(\cdot)$ denotes the projections onto a set $Q$, some $x_\star\in Q_1\cap Q_2$, and $x_k$ denotes the iterate of the following methods; $N$ denotes the ``final'' iteration count); you may experiment with other types of ratios. Can you guess the dependence on $k$ of the worst-case value for this ratio?
+	\begin{enumerate}
+	\item Alternate projections: set $y_0=x_0$ and iterate
+	\begin{equation*}
+	\begin{aligned}
+	x_{k+1}&=\mathrm{Proj}_{Q_1}(y_k),\\
+	y_{k+1}&=\mathrm{Proj}_{Q_2}(x_k),
+	\end{aligned}
+	\end{equation*}
+	\item averaged projections: iterate
+	\begin{equation*}
+	\begin{aligned}
+	x_{k+1}&= \frac12 \left(\mathrm{Proj}_{Q_1}(x_k)+\mathrm{Proj}_{Q_2}(x_k)\right),
+	\end{aligned}
+	\end{equation*}
+	\item Dykstra: initialize $p_0=q_0=0$ and iterate
+	\begin{equation*}
+	\begin{aligned}
+	y_{k}&=\mathrm{Proj}_{Q_1}(x_k+p_k),\\
+	p_{k+1}&=x_k+p_k-y_k,\\
+	x_{k+1}&=\mathrm{Proj}_{Q_2}(y_k+q_k),\\
+	q_{k+1}&=y_k+q_k-x_{k+1}.
+	\end{aligned}
+	\end{equation*}
+	
+	\correction{See \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/tree/main/Codes/Jupyter/Exercise11.ipynb}{this notebook}. The bounds should behave in $O(N^{-1})$.}
+	\end{enumerate}
+	\end{exercise}
+
+
+	
+\paragraph{Credits} Detailed results for \Cref{ex2} (closed-form worst-case convergence rates for gradient descent in different performance measures) can be found in~\cite{taylor2015exact}; the analyses from \Cref{ex:halpern} can be found in~\cite{lieder2017convergence}; the closed-form worst-case analysis of the proximal minimization algorithm from \Cref{ex:pgm} can be found in~\cite{taylor2018exact}; the worst-case analysis for the proximal point method in the context of monotone inclusions can be found in~\cite{gu2020tight}; the analysis from \Cref{ex:drs} can be found in~\cite{giselsson2016linear}.
+
+		
+
+	%==================================
+	%								%||
+	\section{Slightly more advanced techniques}\label{s:adv}		%||
+	%============================	%||
+	%==================================
+
+	This section will be completed shortly. We currently only provide a few pointers to some relevant literature. The corresponding exercises will be provided in an upcoming version of this document.
+	
+	\begin{exercise}[Lyapunov analyses---linear convergence] How to search for Lyapunov functions guaranteeing linear convergence? See, e.g.,~\cite{lessard2014analysis,taylor2018lyapunov}.
+	\end{exercise}
+	
+	\begin{exercise}[Lyapunov analyses---sublinear convergence] How to verify Lyapunov functions guaranteeing sublinear convergence?  See, e.g.,~\cite{pmlr-v99-taylor19a}.
+	\end{exercise}
+	
+	
+	
+	\begin{exercise}[Designing methods---via line-searches] How to design new methods using ``idealistic methods'' involving line-searches or span-searches? See, e.g.,~\cite{drori2018efficient} or~\cite{goujaud2022optimal} for a simple example. 
+	\end{exercise}
+	
+	
+	\begin{exercise}[Designing methods---by optimizing stepsizes] How to design new methods by optimizing their stepsize coefficients? See, e.g.,~\cite{kim2014optimized,kim2018optimizing,van2018fastest,kim2019accelerated,taylor2022optimal} (using convex relaxations), or the more recent~\cite{gupta2022branch} (using a more ``to-the-point'' approach, i.e., more heavy-duty nonlinear optimization).
+	\end{exercise}
+	
+	\begin{exercise}[Relaxations and upper bounds] How to study algorithms on problem classes for which we don't have ``interpolation/extensions'' theorems? See, e.g.,~\cite{gorbunov2022last} for a setting where no known interpolation theorem holds.
+	\end{exercise}
+	
+\paragraph{Further pointers} Mirror descent~\cite{Dragomir2019optimal}, decentralized/distributed optimization~\cite{sundararajan2017robust,sundararajan2020analysis,colla2021automated,colla2022automatic}, continuous-time approaches~\cite{fazlyab2018analysis,moucer2022systematic}, approximate first-order information~\cite{taylor2015exact,deKlerkELS2016,Barre2020inexact}, stochasticity~\cite{hu2017unified,pmlr-v99-taylor19a,hu2021analysis} and adaptivity~\cite{deKlerkELS2016,Barre2020Polyak} will also be part of future versions.
+	
+	%==================================
+	%								%||
+	\section{Background material and useful facts}			%||
+	\label{sec:background}
+	%============================	%||
+	%==================================
+	\subsection{Standard definitions}
+	All convex functions under consideration in this exercise statements are closed and proper per assumption (i.e., they have a closed and non-empty epigraph).
+	\begin{definition}\label{def:smoothconvex}
+	A differentiable convex function $f:\mathbb{R}^d\rightarrow \mathbb{R}$ is $L$-smooth (with $L\in [0,\infty)$; we denote $f\in\mathcal{F}_{0,L}$) if it satisfies $\forall x,y\in\mathbb{R}^d$: $\|\nabla f(x)-\nabla f(y)\|\leqslant L \|x-y\|$.
+	\end{definition}
+	\begin{definition}\label{def:smoothstronglyconvex}
+	A convex differentiable function $f:\mathbb{R}^d\rightarrow \mathbb{R}$ is $L$-smooth and $\mu$-strongly convex ($0\leqslant \mu<L<\infty$; we denote $f\in\mathcal{F}_{\mu,L}$) if it satisfies $\forall x,y\in\mathbb{R}^d$: $\|\nabla f(x)-\nabla f(y)\|\leqslant L \|x-y\|$ and $\|\nabla f(x)-\nabla f(y)\|\geqslant \mu \|x-y\|$.
+	\end{definition}
+	\begin{definition}\label{def:indicator}
+	Let $Q\subseteq \mathbb{R}^d$ be a non-empty closed convex set. The convex indicator function for $Q$ is defined as 
+	\[ i_Q(x) \triangleq \left\{\begin{array}{ll}0 &\text{ if }x\in Q,\\+\infty &\text{ otherwise.}\end{array}\right. \]
+	\end{definition}
+	\begin{definition}\label{def:Lipschtzfunc}
+	A closed proper convex function $f:\mathbb{R}^d\rightarrow \mathbb{R}$ is $M$-Lipschitz (with $M\in [0,\infty)$; notation $f\in\mathcal{C}_M$) if it satisfies $\forall x\in\mathbb{R}^d$ and $s_x\in\partial f(x)$: $\|s_x\|\leqslant M$.
+	\end{definition}
+	\begin{definition}\label{def:monotone}
+	A point to set operator $M$ (notation: $M:\mathbb{R}^d\rightrightarrows\mathbb{R}^d$) is monotone if for all $x,y\in\mathbb{R}^d$ and all $m_x\in M(x)$, $m_y\in M(y)$ it holds that
+	\[ \inner{ x-y}{m_x-m_y}\geqslant 0.\]
+In addition, $M$ is maximal if there is no monotone operator $M'$ such that for all $x$: $M(x)\subset M'(x)$.
+	\end{definition}
+	\begin{definition}\label{def:Lipschitz}
+	A mapping $F:\mathbb{R}^d\rightarrow\mathbb{R}^d$ is $L$-Lipschitz if for all $x,y\in\mathbb{R}^d$ 
+	\[ \|F(x)-F(y)\|\leqslant L\|x-y\|.\]
+	\end{definition}
+	
+	\subsection{Interpolation/extension theorems}
+	This section gathers useful elements allowing to answer certain questions. Those results (or references to them) can be found in, e.g.,~\cite{taylor2015exact,ryu2018operator}.
+
+
+	\begin{theorem}Let $I$ be an index set and $S=\{(x_i,g_i,f_i)\}_{i\in I}\subseteq \mathbb{R}^d\times\mathbb{R}^d\times \mathbb{R}$ be a set of triplets. There exists $f\in\mathcal{F}_{0,\infty}$ (a closed, proper and convex function) satisfying $f(x_i)=f_i$ and $g_i\in\partial f(x_i)$ for all $i\in I$ if and only if
+\begin{equation*}
+\begin{aligned}
+f_i\geqslant f_j+&\langle g_j;x_i-x_j\rangle
+\end{aligned}
+\end{equation*}
+holds for all $i,j\in I$.
+	\end{theorem}
+	
+	\begin{theorem}[$\mathcal{F}_{\mu,L}$-interpolation]\label{thm:interp_smoothstronglyconvex} Let $I$ be an index set and $S=\{(x_i,g_i,f_i)\}_{i\in I}\subseteq \mathbb{R}^d\times\mathbb{R}^d\times \mathbb{R}$ be a set of triplets. There exists $f\in\mathcal{F}_{\mu,L}$ satisfying $f(x_i)=f_i$ and $g_i\in\partial f(x_i)$ for all $i\in I$ if and only if
+\begin{equation*}
+\begin{aligned}
+f_i\geqslant f_j+&\langle g_j;x_i-x_j\rangle+\frac{1}{2L}\|g_i-g_j\|^2+\frac{\mu}{2(1-\mu/L)}\|x_i-x_j-\tfrac{1}{L}(g_i-g_j)\|^2
+\end{aligned}
+\end{equation*}
+holds for all $i,j\in I$.
+\end{theorem}
+
+\begin{theorem}[Indicator-interpolation]\label{thm:interp_indicator} Let $I$ be an index set and $S=\{(x_i,s_i)\}_{i\in I}\subseteq \mathbb{R}^d\times\mathbb{R}^d$ be a set of pairs. There exists a (closed proper convex) indicator function $i_Q:\mathbb{R}^d\rightarrow\mathbb{R}\cup\{\infty\}$ (for a non-empty closed domain $Q\subseteq\mathbb{R}^d$ of diameter $D$) satisfying  $s_i\in\partial i_Q(x_i)$ for all $i\in I$ if and only if
+\begin{equation*}
+\begin{aligned}
+\langle s_j;x_i-x_j\rangle&\leqslant 0\\
+ \|x_i-x_j\|^2 &\leqslant D^2,
+\end{aligned}
+\end{equation*}
+holds for all $i,j\in I$.
+\end{theorem}
+
+	\begin{theorem}[$\mathcal{C}_M$-interpolation]\label{thm:interp_Lipschitzfunc} Let $I$ be an index set and $S=\{(x_i,g_i,f_i)\}_{i\in I}\subseteq \mathbb{R}^d\times\mathbb{R}^d\times \mathbb{R}$ be a set of triplets. There exists $f\in\mathcal{C}_{M}$ (a closed, proper, convex, and $M$-Lipschitz function) satisfying $f(x_i)=f_i$ and $g_i\in\partial f(x_i)$ for all $i\in I$ if and only if
+\begin{equation*}
+\begin{aligned}
+f_i\geqslant& f_j+\langle g_j;x_i-x_j\rangle\\
+M^2\geqslant & \|g_i\|^2
+\end{aligned}
+\end{equation*}
+holds for all $i,j\in I$.
+	\end{theorem}
+	
+	
+\begin{theorem}[Monotone-interpolation]\label{thm:monotone_interpolation} Let $I$ be an index set and $S=\{(x_i,s_i)\}_{i\in I}\subseteq \mathbb{R}^d\times\mathbb{R}^d$ be a set of pairs. There exists a maximal monotone operator $M:\mathbb{R}^d\rightrightarrows\mathbb{R}^d$ satisfying $s_i\in M(x_i)$ for all $i\in I$ if and only if
+\begin{equation*}
+\begin{aligned}
+\langle s_j-s_i;x_j-x_i\rangle&\geqslant 0
+\end{aligned}
+\end{equation*}
+holds for all $i,j\in I$.
+\end{theorem}
+
+\begin{theorem}[Lipschitz-interpolation]\label{thm:Lipschitz_interpolation} Let $I$ be an index set and $S=\{(x_i,s_i)\}_{i\in I}\subseteq \mathbb{R}^d\times\mathbb{R}^d$ be a set of pairs. There exists an $L$-Lipschitz mapping $F:\mathbb{R}^d\rightarrow\mathbb{R}^d$ satisfying $s_i= F(x_i)$ for all $i\in I$ if and only if
+\begin{equation*}
+\begin{aligned}
+\|s_i-s_j\|^2\leqslant L^2 \|x_i-x_j\|^2
+\end{aligned}
+\end{equation*}
+holds for all $i,j\in I$.
+\end{theorem}
+
+%	\section{Going further -- suggested readings}\label{s:readings}
+%	\paragraph{Lyapunov analyses.} also iqc
+%	\paragraph{Designing methods.} also tmm, ogmogmg
+%	\paragraph{Adaptive methods.}
+%	\paragraph{Primal-dual methods.} Ernest'
+%	\paragraph{Mirror descent.} Radu's
+%	\paragraph{Identifying lower complexity bounds.} QG, Radu's
+%	\paragraph{Continuous-time analyses.}
+%	\paragraph{Identifying counter-examples}
+%	\paragraph{Other analyses.}
+%	
+	
+\bibliographystyle{unsrt}
+\bibliography{bib_}{}
+\end{document}
