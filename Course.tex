@@ -1,5 +1,5 @@
 \documentclass[11pt,a4paper]{article}
-\def\includeCorrections{1} % set to 1 to incorporate correction
+\def\includeCorrections{0} % set to 1 to incorporate correction
 
 %%%%% packages
 \usepackage[utf8]{inputenc}
@@ -482,7 +482,7 @@ for all $d\in\mathbb{N}$, all $f\in\mathcal{F}_{\mu,L}(\mathbb{R}^d)$, and all $
 		\end{equation}
 		After substitution of $x_{k+1}$ and $g_\star$ (one can also set $x_\star=f_\star=0$ wlog) in the objective and the constraints, write the Lagrangian $\mathcal{L}(x_k,g_k,f_k,x_\star,f_\star;\lambda_1,\lambda_2,\rho)$ (where $\lambda_1,\lambda_2,\rho\geqslant 0$ are associated as in~\eqref{eq:ex2:assign_dual}). Then, show that the expression of $S$ in~\eqref{eq:ex1_dual} (i.e., the LMI in~\eqref{eq:ex1_dual}) corresponds to $S=-\tfrac12\nabla^2_{x_k,g_k} \mathcal{L}(x_k,g_k,f_k,x_\star,f_\star;\lambda_1,\lambda_2,\rho)$ and that the linear constraint in~\eqref{eq:ex1_dual} corresponds to requiring $s=\nabla_{f_k} \mathcal{L}(x_k,g_k,f_k,x_\star,f_\star;\lambda_1,\lambda_2,\rho)$ to be zero.
 		
-An advantage of this approach is that it allows to easily obtain the dual formulations using symbolic computation (see, e.g., \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/codes/Jupyter/Exercise02.ipynb}{Python this notebook}, or this \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Codes/Matlab/Exercise2_symbolicalLMI.m}{Matlab file}).
+An advantage of this approach is that it allows to easily obtain the dual formulations using symbolic computation (see, e.g., \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Codes/Jupyter/Exercise02.ipynb}{Python this notebook}, or this \href{https://github.com/PerformanceEstimation/Learning-Performance-Estimation/blob/main/Codes/Matlab/Exercise2_symbolicalLMI.m}{Matlab file}).
 		
 		\correction{Because all expressions in the Lagrangian are quadratics in $(x_k-x_\star,g_k)$ and linear in $f_k-f_\star$, the gradient and Hessian of the Lagrangian respectively with respect to $f_k$ and to $(x_k,g_k)$ actually corresponds to the matrices $s$ and $S$ such that \[\mathrm{Trace}(-SG)+ s F=\mathcal{L}(x_k,g_k,f_k,x_\star,f_\star;\lambda_1,\lambda_2,\rho),\] where $G$ is the previously defined Gram matrix~\eqref{ex1:eq:GRAM}.}
 		
