@@ -1,5 +1,5 @@
 \documentclass[11pt,a4paper]{article}
-\def\includeCorrections{0} % set to 1 to incorporate correction
+\def\includeSolutions{0} % set to 1 to incorporate solutions
 
 %%%%% packages
 \usepackage[utf8]{inputenc}
@@ -61,8 +61,8 @@
 \newcommand{\caution}[1]{{\color{red}{\sc Caution:} #1}}
 \newcommand{\pesto}{{PESTO }}
 \newcommand{\pepit}{{PEPit }}
-\if\includeCorrections 1
-\newcommand{\correction}[1]{{{\color{blue}\underline{Correction:} #1}}}
+\if\includeSolutions 1
+\newcommand{\correction}[1]{{{\color{blue}\underline{Solution:} #1}}}
 \else
 \newcommand{\correction}[1]{}
 \fi
@@ -107,7 +107,7 @@ So, our goal is to assess the quality of $x_k$ by providing hopefully meaningful
 
 \paragraph{Packages} The numerical parts of the exercises were mostly done for using Python (or alternatively Matlab), but the reader can use other languages if he is proficient with semidefinite programming with it (although there is currently no interface for easing the access to performance estimation beyond Python and Matlab). A few exercises were designed for using the \pepit package~\cite{goujaud2022pepit} (alternatively, for Matlab,~\pesto\cite{pesto2017}). For users planning to keep using performance estimation, we advise to install a good SDP solver such as MOSEK~\cite{mosek2010}. In any case, the Python package relies on CVXPY~\cite{diamond2016cvxpy} (see \href{https://github.com/PerformanceEstimation/PEPit}{\pepit installation}) and the Matlab one relies on YALMIP~\cite{Yalmip2004} (see \href{https://github.com/PerformanceEstimation/Performance-Estimation-Toolbox/wiki/Toolbox-(and-dependencies)-installation}{\pesto installation}). Some exercises might be simpler to approach using some symbolic computations, such as Sympy~\cite{meurer2017sympy} (which is used in some of the Python notebooks). 
 
-{\color{blue}\paragraph{Getting corrected exercises?} Just recompile this latex file after setting the second line of the document to \verb?\def\includeCorrections{1}? (\verb?\def\includeCorrections{0}? to remove corrections).}
+{\color{blue}\paragraph{Getting corrected exercises?} Just recompile this latex file after setting the second line of the document to \verb?\def\includeSolutions{1}? (\verb?\def\includeSolutions{0}? to remove corrections).}
 
 	%==================================
 	%								%||
@@ -901,7 +901,7 @@ for solving the problem.
 	\[ \text{find } x \in Q_1\cap Q_2,\]
 where $Q_1,Q_2\subseteq \mathbb{R}^d$ are two closed convex sets. We will compare, in terms of their worst-case behaviors, a few methods for solving this problem. 
 
-Write \pepit (or \pesto\!\!) codes for computing the worst-case ratios $\frac{\|\mathrm{Proj}_{Q_1}(x_N)-\mathrm{Proj}_{Q_2}(x_N)\|^2}{\|x_0-x_\star\|^2}$ (where $\mathrm{Proj}_Q(\cdot)$ denotes the projections onto a set $Q$, some $x_\star\in Q_1\cap Q_2$, and $x_k$ denotes the iterate of the following methods; $N$ denotes the ``final'' iteration count); you may experiment with other types of ratios. Can you guess the dependence on $k$ of the worst-case value for this ratio?
+Write \pepit (or \pesto\!\!) codes for computing the worst-case ratios $\frac{\|\mathrm{Proj}_{Q_1}(x_N)-\mathrm{Proj}_{Q_2}(x_N)\|^2}{\|x_0-x_\star\|^2}$ (where $\mathrm{Proj}_Q(\cdot)$ denotes the projections onto a set $Q$, some $x_\star\in Q_1\cap Q_2$, and $x_k$ denotes the iterate of the following methods; $N$ denotes the ``final'' iteration count); you may experiment with other types of ratios. Can you guess the dependence on $N$ of the worst-case value for this ratio?
 	\begin{enumerate}
 	\item Alternate projections: set $y_0=x_0$ and iterate
 	\begin{equation*}
