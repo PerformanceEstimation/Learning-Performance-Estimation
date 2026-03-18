@@ -1,8 +1,10 @@
 # Learning Performance Estimation
 
-This repository contains teaching ressources about performance estimation problems. In short, if you are interested in using worst-case analyses in the context of first-order optimization methods, those ressources might be of interest to you.
+This repository contains teaching ressources about performance estimation problems. In short, if you are interested in using worst-case analyses in the context of first-order optimization methods, those resources might be of interest to you.
 
-A friendly informal introduction to this formalism is available in this [blog post](https://francisbach.com/computer-aided-analyses/).
+A friendly, informal, introduction to this formalism is available in this [blog post](https://francisbach.com/computer-aided-analyses/).
+
+**New version of the tutorial.** A more recent, tutorial, and complete version of a PEP course is provided [here](https://github.com/PerformanceEstimation/Tutorial-SMAI-MODE).
 
 ## Content
 
